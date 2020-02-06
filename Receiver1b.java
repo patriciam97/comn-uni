@@ -1,10 +1,10 @@
 import java.io.*;
 import java.net.*;
 
-public class Receiver1a {
+public class Receiver1b {
 
     public static void main(String args[]) throws Exception {
-        System.out.println("Receiver 1a started");
+        System.out.println("Receiver 1b started");
 
         // Get the address, port and name of file to send over UDP
         final int port = Integer.parseInt(args[0]);
@@ -12,7 +12,15 @@ public class Receiver1a {
 
         receiveFile(port, fileName);
     }
-
+    public static void sendAckPacket(int previousSequenceNumber, DatagramSocket receiverSocket, InetAddress hostAddress, int portNumber) throws IOException {
+        // Resend acknowledgement
+        byte[] ackPacketToSend = new byte[2];
+        ackPacketToSend[0] = (byte)(previousSequenceNumber >> 8);
+        ackPacketToSend[1] = (byte)(previousSequenceNumber);
+        DatagramPacket acknowledgement = new  DatagramPacket(ackPacketToSend, ackPacketToSend.length, hostAddress, portNumber);
+        receiverSocket.send(acknowledgement);
+        System.out.println("Sent: ACK   Sequence Number = " + previousSequenceNumber);
+    }
     public static void receiveFile(int port, String fileName) throws Exception {
         System.out.println("Waiting for file. . .");
         // create receiver socket
@@ -20,8 +28,9 @@ public class Receiver1a {
         File file = new File(fileName);
         FileOutputStream fileStream = new FileOutputStream(file);
 
-        //sequence number and flag
+        //sequence numbers and flag
         int sequenceNumber = 0;
+        int previousSequenceNumber = 0;
         boolean flagLastMessage = false;
         boolean lastMessage = false;
 
@@ -32,14 +41,20 @@ public class Receiver1a {
             byte[] buffer = new byte[1027];
             // Receive packet and retrieve message
             DatagramPacket receivedPacket = new DatagramPacket(buffer, buffer.length);
+            receiverSocket.setSoTimeout(0);
             receiverSocket.receive(receivedPacket);
+
+            // retrieve portNumber and hostAddress for sending ack back
+            int portNumber = receivedPacket.getPort();
+            InetAddress hostAddress = receivedPacket.getAddress();
+            
 
             byte[] messageReceived = new byte[receivedPacket.getLength()];
             byte[] dataReceived = new byte[receivedPacket.getLength() - 3];
 
             messageReceived = receivedPacket.getData();
 
-
+        
             // duplicate detection at the receiver
             int sequenceNumberA = (messageReceived[0] & 0xff) << 8;
             int sequenceNumberB = (messageReceived[1] & 0xff);
@@ -64,6 +79,9 @@ public class Receiver1a {
                 fileStream.write(dataReceived);
                 System.out.println("Received: Sequence number = " + sequenceNumber + ", Flag = " + flagLastMessage);
 
+                // Send acknowledgement
+                sendAckPacket(previousSequenceNumber, receiverSocket, hostAddress, portNumber);
+
                 // if it was the last message to be received close file stream
                 if (flagLastMessage) {
                     fileStream.close();
@@ -72,7 +90,10 @@ public class Receiver1a {
                     // break;
                 }
               } else {
-                  throw new Exception("Corrupted packet"+sequenceNumber+" "+(sequenceNumberA + sequenceNumberB));
+                    System.out.println("DISCARDED PACKET! EXPECTED:  Sequence number: " + (previousSequenceNumber + 1) + " but received " + sequenceNumber + "");
+                    //Resend the acknowledgement
+                    sendAckPacket(previousSequenceNumber, receiverSocket, hostAddress, portNumber);
+                    // throw new Exception("Corrupted packet"+sequenceNumber+" "+(sequenceNumberA + sequenceNumberB));
               }
             if (flagLastMessage) {
               break;

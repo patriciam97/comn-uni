@@ -2,7 +2,7 @@
 import java.io.*;
 import java.net.*;
 import java.util.Date;
-public class Sender1a {
+public class Sender1b {
 
     public static void main(String args[]) throws Exception {
 
@@ -58,63 +58,62 @@ public class Sender1a {
               flagLastMessage = false;
               messageToSend[2] = (byte)(0);
           }
-          // append message bytes
-          if (!flagLastMessage) {
-              DatagramPacket packetToSend;
-              for (int j=0; j <= 1023; j++) {
-                messageToSend[j+3] = fileByteArray[i+j];
-              }
-              System.out.println(messageToSend.length);
-              packetToSend = new DatagramPacket(messageToSend, messageToSend.length, ipAddress, port);
-              senderSocket.send(packetToSend);
-          } else if (flagLastMessage) {
+        // append message bytes
+        if (!flagLastMessage) {
             DatagramPacket packetToSend;
-            // append whatever is left
-            lastMessageToSend = new byte[(fileByteArray.length - i) + 3];
-            System.out.println(lastMessageToSend.length);
-              for (int j=0;  j < (fileByteArray.length - i) ;j++) {
-                lastMessageToSend[j+3] = fileByteArray[i+j];
-              }
-              lastMessageToSend[0] = messageToSend[0];
-              lastMessageToSend[1] = messageToSend[1];
-              lastMessageToSend[2] = messageToSend[2];
-              packetToSend = new DatagramPacket(lastMessageToSend, lastMessageToSend.length, ipAddress, port);
-              senderSocket.send(packetToSend);
-          }
-          System.out.println("Sent: Sequence number = " + sequenceNumber + ", Flag = " + flagLastMessage);
+            for (int j=0; j <= 1023; j++) {
+              messageToSend[j+3] = fileByteArray[i+j];
+            }
+            System.out.println(messageToSend.length);
 
-          // verifying acknowledgements
-           boolean ackRecievedCorrect = false;
-           boolean ackPacketReceived = false;
+        } else if (flagLastMessage) {
+          // append whatever is left
+          messageToSend = new byte[(fileByteArray.length - i) + 3];
+          System.out.println(messageToSend.length);
+            for (int j=0;  j < (fileByteArray.length - i) ;j++) {
+              messageToSend[j+3] = fileByteArray[i+j];
+            }
+            messageToSend[0] = (byte)(sequenceNumber >> 8);
+            messageToSend[1] = (byte)(sequenceNumber);
+            messageToSend[2] = (byte)(1);
+        }
 
-           while (!ackRecievedCorrect) {
-               // Check for an ack
-               byte[] ack = new byte[2];
-               DatagramPacket ackPacket = new DatagramPacket(ack, ack.length);
+        DatagramPacket packetToSend = new DatagramPacket(messageToSend, messageToSend.length, ipAddress, portNumber);
+        senderSocket.send(packetToSend);
+        System.out.println("Sent: Sequence number = " + sequenceNumber + "| Flag = " + flagLastMessage);
 
-               try {
-                   senderSocket.setSoTimeout(50);
-                   senderSocket.receive(ackPacket);
-                   ackSequenceNumber = ((ack[0] & 0xff) << 8) + (ack[1] & 0xff);
-                   ackPacketReceived = true;
-               } catch (SocketTimeoutException e) {
-                   System.out.println("ACK missing - socket timed out");
-                   ackPacketReceived = false;
-                   //e.printStackTrace();
-               }
+        // verifying acknowledgements
+        boolean ackRecievedCorrect = false;
+        boolean ackPacketReceived = false;
 
-               // Break if there is an ack so that the next packet can be sent
-               if ((sequenceNumberACK == sequenceNumber) && (ackPacketReceived)) {
-                   ackRecievedCorrect = true;
-                   System.out.println("Ack received: Sequence Number = " + ackSequenceNumber);
-                   break;
-               } else { // Resend packet
-                   senderSocket.send(packetToSend);
-                   System.out.println("Resending: Sequence Number = " + sequenceNumber);
+        while (!ackRecievedCorrect) {
+            // Check for an ack
+            byte[] ack = new byte[2];
+            DatagramPacket ackPacket = new DatagramPacket(ack, ack.length);
 
-                   // Increment retransmission counter
-                   retransmissionCounter += 1;
-               }
+            try {
+                senderSocket.setSoTimeout(50);
+                senderSocket.receive(ackPacket);
+                sequenceNumberACK = ((ack[0] & 0xff) << 8) + (ack[1] & 0xff);
+                ackPacketReceived = true;
+            } catch (SocketTimeoutException e) {
+                System.out.println("ACK missing - socket timed out");
+                ackPacketReceived = false;
+                //e.printStackTrace();
+            }
+
+            // Break if there is an ack so that the next packet can be sent
+            if ((sequenceNumberACK == sequenceNumber) && (ackPacketReceived)) {
+                ackRecievedCorrect = true;
+                System.out.println("Ack received: Sequence Number = " + sequenceNumberACK);
+                break;
+            } else { // Resend packet
+                senderSocket.send(packetToSend);
+                System.out.println("Resending: Sequence Number = " + sequenceNumber);
+
+                // Increment retransmission counter
+                retransmissionCounter += 1;
+            }
            }
 
           // 10ms gap after each packet transmission to avoid overflow of queue
