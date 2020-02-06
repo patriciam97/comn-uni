@@ -1,8 +1,8 @@
 import java.io.*;
 import java.net.*;
+import java.util.HashMap;
 
 public class Receiver1b {
-
     public static void main(String args[]) throws Exception {
         System.out.println("Receiver 1b started");
 
@@ -33,6 +33,7 @@ public class Receiver1b {
         int previousSequenceNumber = 0;
         boolean flagLastMessage = false;
         boolean lastMessage = false;
+        HashMap<Integer,Boolean> sequencesReceived = new HashMap<Integer,Boolean> ();
 
         // for each incoming message
         while (!lastMessage) {
@@ -77,6 +78,7 @@ public class Receiver1b {
 
                 // save data into a new file with name as fileName
                 fileStream.write(dataReceived);
+                sequencesReceived.put((sequenceNumberA + sequenceNumberB), true);
                 System.out.println("Received: Sequence number = " + sequenceNumber + ", Flag = " + flagLastMessage);
 
                 // Send acknowledgement
@@ -100,5 +102,6 @@ public class Receiver1b {
         receiverSocket.close();
         // confirmation message
         System.out.println(fileName + " has been received and saved.");
+        System.out.println(sequencesReceived.keySet().size())
     }
 }
