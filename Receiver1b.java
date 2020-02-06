@@ -102,6 +102,6 @@ public class Receiver1b {
         receiverSocket.close();
         // confirmation message
         System.out.println(fileName + " has been received and saved.");
-        System.out.println(sequencesReceived.keySet().size())
+        System.out.println(sequencesReceived.keySet().size());
     }
 }
