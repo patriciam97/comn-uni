@@ -6,14 +6,14 @@ public class Sender1a {
 
     public static void main(String args[]) throws Exception {
 
-      final String remoteHost = args[0];
-      final int port = Integer.parseInt(args[1]);
+      final String hostName = args[0];
+      final int portNumber = Integer.parseInt(args[1]);
       final String fileName = args[2];
 
-      sendFile(remoteHost,port,fileName);
+      sendFile(hostName,portNumber,fileName);
     }
 
-    public static void sendFile(String hostName, int port, String fileName) throws IOException {
+    public static void sendFile(String hostName, int portNumber, String fileName) throws IOException {
       // create sender socket
       DatagramSocket senderSocket = new DatagramSocket();
       // translate hostName to an IP address using DNS
@@ -38,7 +38,7 @@ public class Sender1a {
         sequenceNumber += 1;
         // byte array of all packets
         byte[] messageToSend = new byte[1027];
-        byte[] lastMessageToSend;
+        // byte[] lastMessageToSend;
         // duplicate sequence number in header will be used to check for corrupted packets
         messageToSend[0] = (byte)(sequenceNumber >> 8);
         messageToSend[1] = (byte)(sequenceNumber);
@@ -59,23 +59,22 @@ public class Sender1a {
               messageToSend[j+3] = fileByteArray[i+j];
             }
             System.out.println(messageToSend.length);
-            packetToSend = new DatagramPacket(messageToSend, messageToSend.length, ipAddress, port);
-            senderSocket.send(packetToSend);
+
         } else if (flagLastMessage) {
-          DatagramPacket packetToSend;
           // append whatever is left
-          lastMessageToSend = new byte[(fileByteArray.length - i) + 3];
-          System.out.println(lastMessageToSend.length);
+          messageToSend = new byte[(fileByteArray.length - i) + 3];
+          System.out.println(messageToSend.length);
             for (int j=0;  j < (fileByteArray.length - i) ;j++) {
-              lastMessageToSend[j+3] = fileByteArray[i+j];
+              messageToSend[j+3] = fileByteArray[i+j];
             }
-            lastMessageToSend[0] = messageToSend[0];
-            lastMessageToSend[1] = messageToSend[1];
-            lastMessageToSend[2] = messageToSend[2];
-            packetToSend = new DatagramPacket(lastMessageToSend, lastMessageToSend.length, ipAddress, port);
-            senderSocket.send(packetToSend);
+            messageToSend[0] = (byte)(sequenceNumber >> 8);
+            messageToSend[1] = (byte)(sequenceNumber);
+            messageToSend[2] = (byte)(1);
         }
-        System.out.println("Sent: Sequence number = " + sequenceNumber + ", Flag = " + flagLastMessage);
+
+        DatagramPacket packetToSend = new DatagramPacket(messageToSend, messageToSend.length, ipAddress, portNumber);
+        senderSocket.send(packetToSend);
+        System.out.println("Sent: Sequence number = " + sequenceNumber + "| Flag = " + flagLastMessage);
 
         // 10ms gap after each packet transmission to avoid overflow of queue
             try {
@@ -86,6 +85,6 @@ public class Sender1a {
 
     }
     senderSocket.close();
-    System.out.println(fileName + " has been sent to "+hostName+" at port "+port+".");
+    System.out.println("Sent: fileName | To: "+hostName+"| At: "+portNumber+".");
   }
 }

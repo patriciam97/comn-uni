@@ -17,7 +17,6 @@ public class Receiver1a {
         System.out.println("Waiting . . .");
         // create receiver socket
         DatagramSocket receiverSocket = new DatagramSocket(port);
-        InetAddress address;
         File file = new File(fileName);
         FileOutputStream fileStream = new FileOutputStream(file);
 
@@ -72,9 +71,9 @@ public class Receiver1a {
                     lastMessage = true;
                     // break;
                 }
-            } else {
-                throw new Exception("Corrupted packet");
-            }
+              } else {
+                  throw new Exception("Corrupted packet"+sequenceNumber+" "+(sequenceNumberA + sequenceNumberB));
+              }
             if (flagLastMessage) {
               break;
             }
