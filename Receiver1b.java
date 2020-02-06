@@ -88,6 +88,7 @@ public class Receiver1b {
                     System.out.println("DISCARDED PACKET! EXPECTED:  Sequence number: " + (previousSequenceNumber + 1) + " but received " + sequenceNumber + "");
                     //Resend the acknowledgement
                     sendAckPacket(previousSequenceNumber, receiverSocket, hostAddress, portNumber);
+                    flagLastMessage = false;
                     // throw new Exception("Corrupted packet"+sequenceNumber+" "+(sequenceNumberA + sequenceNumberB));
               }
                 // if it was the last message to be received close file stream
