@@ -117,11 +117,11 @@ public class Sender1b {
            }
 
           // 10ms gap after each packet transmission to avoid overflow of queue
-              try {
-                  Thread.sleep(10);
-              } catch (InterruptedException e) {
-                  e.printStackTrace();
-              }
+            //   try {
+            //       Thread.sleep(10);
+            //   } catch (InterruptedException e) {
+            //       e.printStackTrace();
+            //   }
 
       }
       // Calculate the average throughput
