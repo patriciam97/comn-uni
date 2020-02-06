@@ -12,14 +12,14 @@ public class Receiver1b {
 
         receiveFile(port, fileName);
     }
-    public static void sendAckPacket(int previousSequenceNumber, DatagramSocket receiverSocket, InetAddress hostAddress, int portNumber) throws IOException {
+    public static void sendAckPacket(int sequenceNumber, DatagramSocket receiverSocket, InetAddress hostAddress, int portNumber) throws IOException {
         // Resend acknowledgement
         byte[] ackPacketToSend = new byte[2];
-        ackPacketToSend[0] = (byte)(previousSequenceNumber >> 8);
-        ackPacketToSend[1] = (byte)(previousSequenceNumber);
+        ackPacketToSend[0] = (byte)(sequenceNumber >> 8);
+        ackPacketToSend[1] = (byte)(sequenceNumber);
         DatagramPacket acknowledgement = new  DatagramPacket(ackPacketToSend, ackPacketToSend.length, hostAddress, portNumber);
         receiverSocket.send(acknowledgement);
-        System.out.println("Sent: ACK   Sequence Number = " + previousSequenceNumber);
+        System.out.println("Sent: ACK   Sequence Number = " + sequenceNumber);
     }
     public static void receiveFile(int port, String fileName) throws Exception {
         System.out.println("Waiting for file. . .");

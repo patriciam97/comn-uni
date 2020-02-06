@@ -80,7 +80,7 @@ public class Sender1b {
 
         DatagramPacket packetToSend = new DatagramPacket(messageToSend, messageToSend.length, ipAddress, portNumber);
         senderSocket.send(packetToSend);
-        System.out.println("Sent: Sequence number = " + sequenceNumber + "| Flag = " + flagLastMessage);
+        System.out.println("Sent: Sequence number = " + sequenceNumber + "    Flag = " + flagLastMessage);
 
         // verifying acknowledgements
         boolean ackRecievedCorrect = false;
@@ -92,12 +92,12 @@ public class Sender1b {
             DatagramPacket ackPacket = new DatagramPacket(ack, ack.length);
 
             try {
-                senderSocket.setSoTimeout(10);
+                senderSocket.setSoTimeout(50);
                 senderSocket.receive(ackPacket);
                 sequenceNumberACK = ((ack[0] & 0xff) << 8) + (ack[1] & 0xff);
                 ackPacketReceived = true;
             } catch (SocketTimeoutException e) {
-                System.out.println("ACK missing - socket timed out");
+                System.out.println("ACK MISSING:   socket timed out");
                 ackPacketReceived = false;
                 //e.printStackTrace();
             }
