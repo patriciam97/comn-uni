@@ -54,7 +54,6 @@ public class Sender1a {
         }
         // append message bytes
         if (!flagLastMessage) {
-            DatagramPacket packetToSend;
             for (int j=0; j <= 1023; j++) {
               messageToSend[j+3] = fileByteArray[i+j];
             }
@@ -85,6 +84,7 @@ public class Sender1a {
 
     }
     senderSocket.close();
+    fileStream.close();
     System.out.println("Sent: " + fileName);
     System.out.println("To: " + hostName+":"+portNumber);
   }

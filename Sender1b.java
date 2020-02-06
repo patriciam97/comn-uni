@@ -44,7 +44,6 @@ public class Sender1b {
           sequenceNumber += 1;
           // byte array of all packets
           byte[] messageToSend = new byte[1027];
-          byte[] lastMessageToSend;
           // duplicate sequence number in header will be used to check for corrupted packets
           messageToSend[0] = (byte)(sequenceNumber >> 8);
           messageToSend[1] = (byte)(sequenceNumber);
@@ -60,7 +59,6 @@ public class Sender1b {
           }
         // append message bytes
         if (!flagLastMessage) {
-            DatagramPacket packetToSend;
             for (int j=0; j <= 1023; j++) {
               messageToSend[j+3] = fileByteArray[i+j];
             }
@@ -124,6 +122,11 @@ public class Sender1b {
             //   }
 
       }
+      senderSocket.close();
+      fileStream.close();
+      System.out.println("Sent: " + fileName);
+      System.out.println("To: " + hostName+":"+portNumber);
+
       // Calculate the average throughput
       int fileSizeKB = (fileByteArray.length) / 1027;
       date = new Date();
