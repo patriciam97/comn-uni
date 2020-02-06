@@ -33,10 +33,10 @@ public class Sender1b {
       Date date = new Date();
       long timeMilli = date.getTime();
       // sequence number and flag will be needed for the header of each packet
-      int sequenceNumber = 0;
+      int sequenceNumber = -1;
       boolean flagLastMessage = false;
       // sequence number to keep track the acknowledged packets
-      int sequenceNumberACK = 0;
+      int sequenceNumberACK = -1;
       // counter for retransmissions
       int retransmissionCounter = 0;
       // for each message that is being generated
@@ -92,7 +92,7 @@ public class Sender1b {
             DatagramPacket ackPacket = new DatagramPacket(ack, ack.length);
 
             try {
-                senderSocket.setSoTimeout(50);
+                senderSocket.setSoTimeout(10);
                 senderSocket.receive(ackPacket);
                 sequenceNumberACK = ((ack[0] & 0xff) << 8) + (ack[1] & 0xff);
                 ackPacketReceived = true;

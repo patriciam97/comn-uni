@@ -29,7 +29,7 @@ public class Receiver1b {
         FileOutputStream fileStream = new FileOutputStream(file);
 
         //sequence numbers and flag
-        int sequenceNumber = 1;
+        int sequenceNumber = 0;
         int previousSequenceNumber = 0;
         boolean flagLastMessage = false;
         boolean lastMessage = false;
@@ -80,23 +80,19 @@ public class Receiver1b {
                 System.out.println("Received: Sequence number = " + sequenceNumber + ", Flag = " + flagLastMessage);
 
                 // Send acknowledgement
-                sendAckPacket(previousSequenceNumber, receiverSocket, hostAddress, portNumber);
+                sendAckPacket(sequenceNumber, receiverSocket, hostAddress, portNumber);
 
-                // if it was the last message to be received close file stream
-                if (flagLastMessage) {
-                    fileStream.close();
-                    receiverSocket.close();
-                    lastMessage = true;
-                    // break;
-                }
               } else {
                     System.out.println("DISCARDED PACKET! EXPECTED:  Sequence number: " + (previousSequenceNumber + 1) + " but received " + sequenceNumber + "");
                     //Resend the acknowledgement
                     sendAckPacket(previousSequenceNumber, receiverSocket, hostAddress, portNumber);
                     // throw new Exception("Corrupted packet"+sequenceNumber+" "+(sequenceNumberA + sequenceNumberB));
               }
-            if (flagLastMessage) {
-              break;
+                // if it was the last message to be received close file stream
+                if (flagLastMessage) {
+                fileStream.close();
+                receiverSocket.close();
+                lastMessage = true;
             }
         }
 
