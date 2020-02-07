@@ -14,7 +14,7 @@ public class Evaluation{
         int[] retransmissions = {5,10,15,20,25,30,40,50,75,100};
         java.util.HashMap<Integer,Double[]> results = new HashMap<Integer,Double[]>();
 
-        for (int i=0; i< retransmissions.length;i++){
+        for (int i=retransmissions.length-1; i>0;i--){
             Integer timeout = retransmissions[i];
             System.out.println("Running test for "+timeout);
             double counterRetransmissions = (double) 0;
