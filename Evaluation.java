@@ -43,7 +43,7 @@ public class Evaluation{
                 throughput/=5;
                 Double[] res = {counterRetransmissions,throughput};
                 results.put(timeout, res);
-                FileWriter file = new FileWriter("results.txt");
+                BufferedWriter file = new BufferedWriter(new FileWriter("results.txt", true));
                 file.write(" Timeout: "+timeout+"   Retransmissions: "+ counterRetransmissions+"    Avg.Throughput: "+throughput);
                 file.close();
                 
