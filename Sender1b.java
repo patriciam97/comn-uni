@@ -40,8 +40,10 @@ public class Sender1b {
       // counter for retransmissions
       int retransmissionCounter = 0;
       // for each message that is being generated
+
       for (int i=0; i < fileByteArray.length; i +=1024 ) { //1KB = 1024 bytes  - 3 bytes for header = 1021
           sequenceNumber += 1;
+          System.out.println("Sequence number: "+sequenceNumber );
           // byte array of all packets
           byte[] messageToSend = new byte[1027];
           // duplicate sequence number in header will be used to check for corrupted packets
