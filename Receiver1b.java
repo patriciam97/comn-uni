@@ -29,8 +29,8 @@ public class Receiver1b {
         FileOutputStream fileStream = new FileOutputStream(file);
 
         //sequence numbers and flag
-        int sequenceNumber = 0;
-        int previousSequenceNumber = 0;
+        int sequenceNumber = -1;
+        int previousSequenceNumber = -1;
         boolean flagLastMessage = false;
         boolean lastMessage = false;
         HashMap<Integer,Boolean> sequencesReceived = new HashMap<Integer,Boolean> ();
