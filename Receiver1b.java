@@ -18,7 +18,7 @@ public class Receiver1b {
         ackPacketToSend[1] = (byte)(sequenceNumber);
         DatagramPacket acknowledgement = new  DatagramPacket(ackPacketToSend, ackPacketToSend.length, hostAddress, portNumber);
         receiverSocket.send(acknowledgement);
-        System.out.println("Sent: ACK   Sequence Number = " + sequenceNumber);
+        System.out.println("Sent: ACK Sequence Number = " + sequenceNumber);
     }
 
     public static void receiveFile(int port, String fileName) throws Exception {
@@ -76,7 +76,7 @@ public class Receiver1b {
 
                 // save data into a new file with name as fileName
                 fileStream.write(dataReceived);
-                System.out.println("Received: Sequence number = " + sequenceNumber + " Flag = " + flagLastMessage + "   Length: "+messageReceived.length);
+                System.out.println("Received: Sequence number = " + sequenceNumber + " Flag = " + flagLastMessage + "   Length: "+ dataReceived.length);
 
                 // Send acknowledgement
                 sendAckPacket(sequenceNumber, receiverSocket, hostAddress, portNumber);
@@ -99,7 +99,7 @@ public class Receiver1b {
         // close socket once done
         receiverSocket.close();
         // confirmation message
-        System.out.println("=============================== C O M P L E T E D ===============================");
+        System.out.println("\n=============================== C O M P L E T E D ===============================");
         System.out.println("\n Received: "+fileName);
     }
 }

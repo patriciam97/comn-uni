@@ -71,7 +71,7 @@ public class Sender1a {
 
         DatagramPacket packetToSend = new DatagramPacket(messageToSend, messageToSend.length, ipAddress, portNumber);
         senderSocket.send(packetToSend);
-        System.out.println("Sent: Sequence number = " + sequenceNumber + "   Flag = " + flagLastMessage  +"   Length: "+messageToSend.length);
+        System.out.println("Sent: Sequence number = " + sequenceNumber + "   Flag = " + flagLastMessage  + "   Length: "+messageToSend.length);
 
         // 10ms gap after each packet transmission to avoid overflow of queue
             try {
@@ -83,7 +83,7 @@ public class Sender1a {
     }
     senderSocket.close();
     fileStream.close();
-    System.out.println("=============================== C O M P L E T E D ===============================");
+    System.out.println("\n=============================== C O M P L E T E D ===============================");
     System.out.println("\nSent: " + fileName);
     System.out.println("To: " + hostName+":"+portNumber);
   }

@@ -80,7 +80,7 @@ public class Receiver1a {
         // close socket once done
         receiverSocket.close();
         // confirmation message
-        System.out.println("=============================== C O M P L E T E D ===============================");
+        System.out.println("\n=============================== C O M P L E T E D ===============================");
         System.out.println("\n Received: "+fileName);
     }
 }

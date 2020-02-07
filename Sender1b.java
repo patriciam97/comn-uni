@@ -76,7 +76,7 @@ public class Sender1b {
 
         DatagramPacket packetToSend = new DatagramPacket(messageToSend, messageToSend.length, ipAddress, portNumber);
         senderSocket.send(packetToSend);
-        System.out.println("Sent: Sequence number = " + sequenceNumber + "    Flag = " + flagLastMessage);
+        System.out.println("Sent: Sequence number = " + sequenceNumber + "    Flag = " + flagLastMessage + "   Length: "+messageToSend.length);
 
         // verifying acknowledgements
         boolean ackRecievedCorrect = false;
@@ -122,7 +122,7 @@ public class Sender1b {
       }
       senderSocket.close();
       fileStream.close();
-      System.out.println("=============================== C O M P L E T E D ===============================");
+      System.out.println("\n============================== C O M P L E T E D ===============================");
       System.out.println("\nSent: " + fileName);
       System.out.println("To: " + hostName+":"+portNumber);
       // Calculate the average throughput
