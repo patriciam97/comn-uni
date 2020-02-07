@@ -3,13 +3,13 @@ import java.io.*;
 import java.net.*;
 import java.util.Date;
 public class Sender1b {
-    public static void main(String args[]) throws Exception {
+    public static double[] main(String args[]) throws Exception {
 
       final String hostName = args[0];
       final int portNumber = Integer.parseInt(args[1]);
       final String fileName = args[2];
-      final int timeout = args[3];
-      sendFile(hostName,portNumber,fileName,timeout);
+      final int timeout = Integer.parseInt(args[3]);
+      return sendFile(hostName,portNumber,fileName,timeout);
     }
 
     public static double[] sendFile(String hostName, int portNumber, String fileName,int timeout) throws IOException {
