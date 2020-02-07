@@ -1,16 +1,27 @@
+
 import java.io.*;
 import java.net.*;
-import java.util.HashMap;
+import java.util.Date;
 
-public class Receiver1b {
-    public static void main(String args[]) throws Exception {
+public class Receiver1bRunnable implements Runnable{
+    int portNumber;
+    String fileName;
 
-        // Get the address, port and name of file to send over UDP
-        final int port = Integer.parseInt(args[0]);
-        final String fileName = args[1];
 
-        receiveFile(port, fileName);
+    public Receiver1bRunnable(int port, String fileName){
+      this.portNumber = port;
+      this.fileName = fileName;
     }
+
+	public void run() {
+        try{
+            receiveFile(this.portNumber,this.fileName);
+        }
+        catch (Exception e){
+            System.out.println(e.getMessage());
+        }
+    }
+
     public static void sendAckPacket(int sequenceNumber, DatagramSocket receiverSocket, InetAddress hostAddress, int portNumber) throws IOException {
         // Resend acknowledgement
         byte[] ackPacketToSend = new byte[2];
@@ -102,4 +113,4 @@ public class Receiver1b {
         System.out.println("\n=============================== C O M P L E T E D ===============================");
         System.out.println("\n Received: "+fileName);
     }
-}
+  }

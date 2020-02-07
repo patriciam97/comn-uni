@@ -2,18 +2,37 @@
 import java.io.*;
 import java.net.*;
 import java.util.Date;
-public class Sender1b {
 
-    public static void main(String args[]) throws Exception {
+public class Sender1bRunnable implements Runnable{
+    String hostName;
+    int portNumber;
+    String fileName;
+    int timeout;
+    double throughput;
+    int retransmissionCounter;
 
-      final String hostName = args[0];
-      final int portNumber = Integer.parseInt(args[1]);
-      final String fileName = args[2];
-
-      sendFile(hostName,portNumber,fileName);
+    public Sender1bRunnable(String hostName, int port, String fileName, int timeout){
+      this.hostName = hostName;
+      this.portNumber = port;
+      this.fileName = fileName;
+      this.timeout = timeout;
     }
 
-    public static void sendFile(String hostName, int portNumber, String fileName) throws IOException {
+	public void run() {
+        try{
+            sendFile(this.hostName,this.portNumber,this.fileName,this.timeout);
+        }
+        catch (Exception e){
+            System.out.println(e.getMessage());
+        }
+    }
+    public int getRetransmissions(){
+        return this.retransmissionCounter;
+    }
+    public double getThroughput(){
+        return this.throughput;
+    }
+    public void sendFile(String hostName, int portNumber, String fileName,int timeout) throws IOException {
 
       // create sender socket
       DatagramSocket senderSocket = new DatagramSocket();
@@ -38,7 +57,7 @@ public class Sender1b {
       // sequence number to keep track the acknowledged packets
       int sequenceNumberACK = -1;
       // counter for retransmissions
-      int retransmissionCounter = 0;
+      this. retransmissionCounter = 0;
       // for each message that is being generated
 
       for (int i=0; i < fileByteArray.length; i +=1024 ) { //1KB = 1024 bytes  - 3 bytes for header = 1021
@@ -88,7 +107,7 @@ public class Sender1b {
             DatagramPacket ackPacket = new DatagramPacket(ack, ack.length);
 
             try {
-                senderSocket.setSoTimeout(50);
+                senderSocket.setSoTimeout(timeout);
                 senderSocket.receive(ackPacket);
                 sequenceNumberACK = ((ack[0] & 0xff) << 8) + (ack[1] & 0xff);
                 ackPacketReceived = true;
@@ -130,7 +149,7 @@ public class Sender1b {
       date = new Date();
       long timeDoneMS = date.getTime();
       double transferTime = (timeDoneMS - timeMilli)/ 1000;
-      double throughput = (double) fileSizeKB / transferTime;
+      this.throughput = (double) fileSizeKB / transferTime;
       System.out.println("File Size: " + fileSizeKB + " KB");
       System.out.println("Transfer Time: " + transferTime + " seconds");
       System.out.println("Throughput: " + throughput + " KBps");

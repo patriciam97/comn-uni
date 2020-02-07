@@ -1,8 +1,9 @@
 
 import java.io.*;
+import java.lang.Thread.State;
 import java.net.*;
 import java.util.HashMap;
-public class Evaluation {
+public class Evaluation{
 
     public static void main(String args[]) throws Exception {
         HashMap<Integer,Double[]> results = experiment();
@@ -20,14 +21,19 @@ public class Evaluation {
             double throughput = (double) 0;
             for (int j=0;j<5;j++){
                 String rec[] = {"100","1a.jpg"};
-                String sen[]= {"localhost","100","test.jpg",Integer.toString(timeout)};
                 try{
-                    Receiver1a receiver = new Receiver1a();
-                    receiver.main(rec);
-                    Sender1b sender = new Sender1b();
-                    double[] res = sender.main(sen);
-                    counterRetransmissions+=res[0];
-                    throughput+=res[1];
+                    Receiver1bRunnable receiver = new Receiver1bRunnable(100, "1b.jpg");
+                    Sender1bRunnable sender = new Sender1bRunnable("localhost", 100, "test.jpg", timeout);
+                    Thread treceiver = new Thread(receiver);
+                    Thread tsender = new Thread(sender);
+                    treceiver.start();
+                    tsender.start();
+                    while (tsender.getState()== State.RUNNABLE){
+
+                    }
+                    counterRetransmissions+= sender.getRetransmissions();
+                    throughput+=sender.getThroughput();
+                    System.out.println("Experiment "+j+" for timeout "+timeout+"has been completed");
 
                 } catch (Exception e){
                     System.out.println(e.getMessage());
