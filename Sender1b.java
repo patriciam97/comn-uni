@@ -3,17 +3,16 @@ import java.io.*;
 import java.net.*;
 import java.util.Date;
 public class Sender1b {
-
     public static void main(String args[]) throws Exception {
 
       final String hostName = args[0];
       final int portNumber = Integer.parseInt(args[1]);
       final String fileName = args[2];
-
-      sendFile(hostName,portNumber,fileName);
+      final int timeout = args[3];
+      sendFile(hostName,portNumber,fileName,timeout);
     }
 
-    public static void sendFile(String hostName, int portNumber, String fileName) throws IOException {
+    public static double[] sendFile(String hostName, int portNumber, String fileName,int timeout) throws IOException {
 
       // create sender socket
       DatagramSocket senderSocket = new DatagramSocket();
@@ -88,7 +87,7 @@ public class Sender1b {
             DatagramPacket ackPacket = new DatagramPacket(ack, ack.length);
 
             try {
-                senderSocket.setSoTimeout(50);
+                senderSocket.setSoTimeout(timeout);
                 senderSocket.receive(ackPacket);
                 sequenceNumberACK = ((ack[0] & 0xff) << 8) + (ack[1] & 0xff);
                 ackPacketReceived = true;
@@ -135,5 +134,7 @@ public class Sender1b {
       System.out.println("Transfer Time: " + transferTime + " seconds");
       System.out.println("Throughput: " + throughput + " KBps");
       System.out.println("Number of retransmissions: " + retransmissionCounter);
+      double[] results = {new Double(retransmissionCounter),throughput};
+      return (results);
     }
   }
