@@ -57,12 +57,10 @@ public class Sender1a {
             for (int j=0; j <= 1023; j++) {
               messageToSend[j+3] = fileByteArray[i+j];
             }
-            System.out.println(messageToSend.length);
 
         } else if (flagLastMessage) {
           // append whatever is left
           messageToSend = new byte[(fileByteArray.length - i) + 3];
-          System.out.println(messageToSend.length);
             for (int j=0;  j < (fileByteArray.length - i) ;j++) {
               messageToSend[j+3] = fileByteArray[i+j];
             }
@@ -73,7 +71,7 @@ public class Sender1a {
 
         DatagramPacket packetToSend = new DatagramPacket(messageToSend, messageToSend.length, ipAddress, portNumber);
         senderSocket.send(packetToSend);
-        System.out.println("Sent: Sequence number = " + sequenceNumber + "   Flag = " + flagLastMessage);
+        System.out.println("Sent: Sequence number = " + sequenceNumber + "   Flag = " + flagLastMessage  +"   Length: "+messageToSend.length);
 
         // 10ms gap after each packet transmission to avoid overflow of queue
             try {
@@ -85,7 +83,8 @@ public class Sender1a {
     }
     senderSocket.close();
     fileStream.close();
-    System.out.println("Sent: " + fileName);
+    System.out.println("=============================== C O M P L E T E D ===============================");
+    System.out.println("\nSent: " + fileName);
     System.out.println("To: " + hostName+":"+portNumber);
   }
 }

@@ -4,8 +4,6 @@ import java.net.*;
 public class Receiver1a {
 
     public static void main(String args[]) throws Exception {
-        System.out.println("Receiver 1a started");
-
         // Get the address, port and name of file to send over UDP
         final int port = Integer.parseInt(args[0]);
         final String fileName = args[1];
@@ -62,7 +60,7 @@ public class Receiver1a {
 
                 // save data into a new file with name as fileName
                 fileStream.write(dataReceived);
-                System.out.println("Received: Sequence number = " + sequenceNumber + ", Flag = " + flagLastMessage);
+                System.out.println("Received: Sequence number = " + sequenceNumber + ", Flag = " + flagLastMessage + "   Length: "+messageReceived.length);
 
                 // if it was the last message to be received close file stream
                 if (flagLastMessage) {
@@ -82,6 +80,7 @@ public class Receiver1a {
         // close socket once done
         receiverSocket.close();
         // confirmation message
-        System.out.println(fileName + " has been received and saved.");
+        System.out.println("=============================== C O M P L E T E D ===============================");
+        System.out.println("\n Received: "+fileName);
     }
 }

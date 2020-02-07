@@ -43,7 +43,6 @@ public class Sender1b {
 
       for (int i=0; i < fileByteArray.length; i +=1024 ) { //1KB = 1024 bytes  - 3 bytes for header = 1021
           sequenceNumber += 1;
-          System.out.println("Sequence number: "+sequenceNumber );
           // byte array of all packets
           byte[] messageToSend = new byte[1027];
           // duplicate sequence number in header will be used to check for corrupted packets
@@ -64,12 +63,9 @@ public class Sender1b {
             for (int j=0; j <= 1023; j++) {
               messageToSend[j+3] = fileByteArray[i+j];
             }
-            System.out.println(messageToSend.length);
-
         } else if (flagLastMessage) {
           // append whatever is left
           messageToSend = new byte[(fileByteArray.length - i) + 3];
-          System.out.println(messageToSend.length);
             for (int j=0;  j < (fileByteArray.length - i) ;j++) {
               messageToSend[j+3] = fileByteArray[i+j];
             }
@@ -97,7 +93,7 @@ public class Sender1b {
                 sequenceNumberACK = ((ack[0] & 0xff) << 8) + (ack[1] & 0xff);
                 ackPacketReceived = true;
             } catch (SocketTimeoutException e) {
-                System.out.println("ACK MISSING:   socket timed out");
+                System.out.println("Ack missing:   socket timed out");
                 ackPacketReceived = false;
                 //e.printStackTrace();
             }
@@ -126,16 +122,18 @@ public class Sender1b {
       }
       senderSocket.close();
       fileStream.close();
-      System.out.println("Sent: " + fileName);
+      System.out.println("=============================== C O M P L E T E D ===============================");
+      System.out.println("\nSent: " + fileName);
       System.out.println("To: " + hostName+":"+portNumber);
-
       // Calculate the average throughput
       int fileSizeKB = (fileByteArray.length) / 1027;
       date = new Date();
       long timeDoneMS = date.getTime();
       double transferTime = (timeDoneMS - timeMilli)/ 1000;
       double throughput = (double) fileSizeKB / transferTime;
-      System.out.println("File size: " + fileSizeKB + "KB, Transfer time: " + transferTime + " seconds. Throughput: " + throughput + "KBps");
+      System.out.println("File Size: " + fileSizeKB + " KB");
+      System.out.println("Transfer Time: " + transferTime + " seconds");
+      System.out.println("Throughput: " + throughput + " KBps");
       System.out.println("Number of retransmissions: " + retransmissionCounter);
     }
   }

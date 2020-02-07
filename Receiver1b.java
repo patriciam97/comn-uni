@@ -4,7 +4,6 @@ import java.util.HashMap;
 
 public class Receiver1b {
     public static void main(String args[]) throws Exception {
-        System.out.println("Receiver 1b started");
 
         // Get the address, port and name of file to send over UDP
         final int port = Integer.parseInt(args[0]);
@@ -21,6 +20,7 @@ public class Receiver1b {
         receiverSocket.send(acknowledgement);
         System.out.println("Sent: ACK   Sequence Number = " + sequenceNumber);
     }
+
     public static void receiveFile(int port, String fileName) throws Exception {
         System.out.println("Waiting for file. . .");
         // create receiver socket
@@ -33,8 +33,6 @@ public class Receiver1b {
         int previousSequenceNumber = -1;
         boolean flagLastMessage = false;
         boolean lastMessage = false;
-        HashMap<Integer,Boolean> sequencesReceived = new HashMap<Integer,Boolean> ();
-
         // for each incoming message
         while (!lastMessage) {
             // byte array for data (message without header)
@@ -78,14 +76,13 @@ public class Receiver1b {
 
                 // save data into a new file with name as fileName
                 fileStream.write(dataReceived);
-                sequencesReceived.put((sequenceNumberA + sequenceNumberB), true);
-                System.out.println("Received: Sequence number = " + sequenceNumber + ", Flag = " + flagLastMessage);
+                System.out.println("Received: Sequence number = " + sequenceNumber + " Flag = " + flagLastMessage + "   Length: "+messageReceived.length);
 
                 // Send acknowledgement
                 sendAckPacket(sequenceNumber, receiverSocket, hostAddress, portNumber);
 
               } else {
-                    System.out.println("DISCARDED PACKET! EXPECTED:  Sequence number: " + (previousSequenceNumber + 1) + " but received " + sequenceNumber + "");
+                    System.out.println("DISCARDED PACKET! Expected:  Sequence number: " + (previousSequenceNumber + 1) + " but received " + sequenceNumber + ".");
                     //Resend the acknowledgement
                     sendAckPacket(previousSequenceNumber, receiverSocket, hostAddress, portNumber);
                     flagLastMessage = false;
@@ -102,7 +99,7 @@ public class Receiver1b {
         // close socket once done
         receiverSocket.close();
         // confirmation message
-        System.out.println(fileName + " has been received and saved.");
-        System.out.println(sequencesReceived.keySet().size());
+        System.out.println("=============================== C O M P L E T E D ===============================");
+        System.out.println("\n Received: "+fileName);
     }
 }
