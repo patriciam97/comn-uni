@@ -15,6 +15,7 @@ public class Evaluation {
 
         for (int i=0; i< retransmissions.length;i++){
             Integer timeout = retransmissions[i];
+            System.out.println("Running test for "+timeout);
             double counterRetransmissions = (double) 0;
             double throughput = (double) 0;
             for (int j=0;j<5;j++){
@@ -35,6 +36,10 @@ public class Evaluation {
                 Double[] res = {counterRetransmissions,throughput};
                 results.put(timeout, res);
             }
+            System.out.println("Test for "+timeout+" completed.");
+            System.out.println("Results:"+results.get(timeout));
+
+
         }
         return results;
     }
