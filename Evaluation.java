@@ -34,6 +34,8 @@ public class Evaluation{
                     counterRetransmissions+= sender.getRetransmissions();
                     throughput+=sender.getThroughput();
                     System.out.println("Experiment "+j+" for timeout "+timeout+"has been completed");
+                    treceiver.stop();
+                    tsender.stop();
 
                 } catch (Exception e){
                     System.out.println(e.getMessage());
@@ -41,6 +43,10 @@ public class Evaluation{
                 throughput/=5;
                 Double[] res = {counterRetransmissions,throughput};
                 results.put(timeout, res);
+                FileWriter file = new FileWriter("results.txt");
+                file.write(" Timeout: "+timeout+"   Retransmissions: "+ counterRetransmissions+"    Avg.Throughput: "+throughput);
+                file.close();
+                
             }
             System.out.println("Test for "+timeout+" completed.");
             System.out.println("Results:"+results.get(timeout));
