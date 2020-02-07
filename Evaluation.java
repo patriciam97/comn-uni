@@ -43,14 +43,14 @@ public class Evaluation{
                 throughput/=5;
                 Double[] res = {counterRetransmissions,throughput};
                 results.put(timeout, res);
-                BufferedWriter file = new BufferedWriter(new FileWriter("results.txt", true));
-                file.write(" Timeout: "+timeout+"   Retransmissions: "+ counterRetransmissions+"    Avg.Throughput: "+throughput);
-                file.close();
+
                 
             }
             System.out.println("Test for "+timeout+" completed.");
+            BufferedWriter file = new BufferedWriter(new FileWriter("results.txt", true));
+            file.write("\nTimeout: "+timeout+"   Retransmissions: "+ counterRetransmissions+"    Avg.Throughput: "+throughput);
+            file.close();
             System.out.println("Results:"+results.get(timeout));
-
 
         }
         return results;
