@@ -21,7 +21,7 @@ public class Receiver1a {
         FileOutputStream fileStream = new FileOutputStream(file);
 
         //sequence number and flag
-        int sequenceNumber = 0;
+        int sequenceNumber = -1;
         boolean flagLastMessage = false;
         boolean lastMessage = false;
 

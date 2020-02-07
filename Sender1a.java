@@ -29,7 +29,7 @@ public class Sender1a {
       fileStream.read(fileByteArray);
 
       // sequence number and flag will be needed for the header of each packet
-      int sequenceNumber = 0;
+      int sequenceNumber = -1;
       boolean flagLastMessage = false;
 
       // for each message that is being generated
