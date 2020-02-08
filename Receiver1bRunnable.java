@@ -57,14 +57,14 @@ public class Receiver1bRunnable implements Runnable{
             // retrieve portNumber and hostAddress for sending ack back
             int portNumber = receivedPacket.getPort();
             InetAddress hostAddress = receivedPacket.getAddress();
-            
+
 
             byte[] messageReceived = new byte[receivedPacket.getLength()];
             byte[] dataReceived = new byte[receivedPacket.getLength() - 3];
 
             messageReceived = receivedPacket.getData();
 
-        
+
             // duplicate detection at the receiver
             int sequenceNumberA = (messageReceived[0] & 0xff) << 8;
             int sequenceNumberB = (messageReceived[1] & 0xff);
