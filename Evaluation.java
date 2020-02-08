@@ -19,7 +19,9 @@ public class Evaluation{
         Date date = new Date();
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd h:mm:ss a");
         file.write("\n=============================== Date: " + formatter.format(date)+"=============================== ");
+        file.close();
         for (int i=retransmissions.length-1; i>0;i--){
+            BufferedWriter file = new BufferedWriter(new FileWriter("results.txt", true));
             Integer timeout = retransmissions[i];
             System.out.println("Running tests for "+timeout);
             double counterRetransmissions = (double) 0;
