@@ -3,6 +3,9 @@ import java.io.*;
 import java.lang.Thread.State;
 import java.net.*;
 import java.util.HashMap;
+import java.time.format.DateTimeFormatter;  
+import java.time.LocalDateTime; 
+
 public class Evaluation{
 
     public static void main(String args[]) throws Exception {
@@ -15,12 +18,16 @@ public class Evaluation{
         java.util.HashMap<Integer,Double[]> results = new HashMap<Integer,Double[]>();
 
         for (int i=retransmissions.length-1; i>0;i--){
+            BufferedWriter file = new BufferedWriter(new FileWriter("results.txt", true));
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss"); 
+            LocalDateTime now = LocalDateTime.now(); 
+            file.write("\n=============================== Date: " + dtf.format(now)+"=============================== ");
             Integer timeout = retransmissions[i];
-            System.out.println("Running test for "+timeout);
+            System.out.println("Running tests for "+timeout);
             double counterRetransmissions = (double) 0;
             double throughput = (double) 0;
             for (int j=0;j<5;j++){
-                String rec[] = {"100","1a.jpg"};
+                file.write("\n=============================== Timeout : " + timeout +"=============================== ");
                 try{
                     Receiver1bRunnable receiver = new Receiver1bRunnable(100, "1b.jpg");
                     Sender1bRunnable sender = new Sender1bRunnable("localhost", 100, "test.jpg", timeout);
@@ -31,6 +38,7 @@ public class Evaluation{
                     while (tsender.getState()== State.RUNNABLE){
 
                     }
+                    file.write("\nTest "+ j +": Retransmissions: " + sender.getRetransmissions() +" Throughput: "+ sender.getThroughput());
                     counterRetransmissions+= sender.getRetransmissions();
                     throughput+=sender.getThroughput();
                     System.out.println("Experiment "+j+" for timeout "+timeout+"has been completed");
@@ -47,8 +55,9 @@ public class Evaluation{
                 
             }
             System.out.println("Test for "+timeout+" completed.");
-            BufferedWriter file = new BufferedWriter(new FileWriter("results.txt", true));
+            file.write("-------------------------------------------------------------------------------------------------");
             file.write("\nTimeout: "+timeout+"   Retransmissions: "+ counterRetransmissions+"    Avg.Throughput: "+throughput);
+            file.write("-------------------------------------------------------------------------------------------------");
             file.close();
             System.out.println("Results:"+results.get(timeout));
 
