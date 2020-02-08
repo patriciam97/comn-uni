@@ -3,9 +3,8 @@ import java.io.*;
 import java.lang.Thread.State;
 import java.net.*;
 import java.util.HashMap;
-import java.time.format.DateTimeFormatter;  
-import java.time.LocalDateTime; 
-
+import java.text.SimpleDateFormat;
+import java.util.Date;
 public class Evaluation{
 
     public static void main(String args[]) throws Exception {
@@ -19,9 +18,9 @@ public class Evaluation{
 
         for (int i=retransmissions.length-1; i>0;i--){
             BufferedWriter file = new BufferedWriter(new FileWriter("results.txt", true));
-            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss"); 
-            LocalDateTime now = LocalDateTime.now(); 
-            file.write("\n=============================== Date: " + dtf.format(now)+"=============================== ");
+            Date date = new Date();
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd h:mm:ss a");
+            file.write("\n=============================== Date: " + formatter.format(date)+"=============================== ");
             Integer timeout = retransmissions[i];
             System.out.println("Running tests for "+timeout);
             double counterRetransmissions = (double) 0;
