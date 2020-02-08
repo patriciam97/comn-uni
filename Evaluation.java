@@ -15,18 +15,17 @@ public class Evaluation{
     public static HashMap<Integer,Double[]> experiment() throws IOException {
         int[] retransmissions = {5,10,15,20,25,30,40,50,75,100};
         java.util.HashMap<Integer,Double[]> results = new HashMap<Integer,Double[]>();
-
+        BufferedWriter file = new BufferedWriter(new FileWriter("results.txt", true));
+        Date date = new Date();
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd h:mm:ss a");
+        file.write("\n=============================== Date: " + formatter.format(date)+"=============================== ");
         for (int i=retransmissions.length-1; i>0;i--){
-            BufferedWriter file = new BufferedWriter(new FileWriter("results.txt", true));
-            Date date = new Date();
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd h:mm:ss a");
-            file.write("\n=============================== Date: " + formatter.format(date)+"=============================== ");
             Integer timeout = retransmissions[i];
             System.out.println("Running tests for "+timeout);
             double counterRetransmissions = (double) 0;
             double throughput = (double) 0;
             for (int j=0;j<5;j++){
-                file.write("\n=============================== Timeout : " + timeout +"=============================== ");
+                file.write("\n\t\t\t\t Timeout : " + timeout);
                 try{
                     Receiver1bRunnable receiver = new Receiver1bRunnable(100, "1b.jpg");
                     Sender1bRunnable sender = new Sender1bRunnable("localhost", 100, "test.jpg", timeout);
