@@ -24,21 +24,19 @@ public class Sender1a {
       InputStream fileStream = new FileInputStream(file);
       // create a byte array to split the fileStream into packets later
       byte[] fileByteArray = new byte[(int)file.length()];
-      System.out.println("Byte array of size "+ (int)file.length()+" has been created.");
       // // split the stream of bytes into a byte array
       fileStream.read(fileByteArray);
 
       // sequence number and flag will be needed for the header of each packet
-      int sequenceNumber = -1;
+      int sequenceNumber = 0;
       boolean flagLastMessage = false;
 
       // for each message that is being generated
-      for (int i=0; i < fileByteArray.length; i +=1024 ) { //1KB = 1024 bytes  - 3 bytes for header = 1021
+      for (int i=0; i < fileByteArray.length; i +=1024 ) { //1027B - 3 bytes for header = 1024 
 
         sequenceNumber += 1;
-        // byte array of all packets
+        // byte array represents packet 
         byte[] messageToSend = new byte[1027];
-        // byte[] lastMessageToSend;
         // duplicate sequence number in header will be used to check for corrupted packets
         messageToSend[0] = (byte)(sequenceNumber >> 8);
         messageToSend[1] = (byte)(sequenceNumber);
@@ -52,7 +50,7 @@ public class Sender1a {
             flagLastMessage = false;
             messageToSend[2] = (byte)(0);
         }
-        // append message bytes
+        // append data bytes
         if (!flagLastMessage) {
             for (int j=0; j <= 1023; j++) {
               messageToSend[j+3] = fileByteArray[i+j];
@@ -83,8 +81,8 @@ public class Sender1a {
     }
     senderSocket.close();
     fileStream.close();
-    System.out.println("\n=============================== C O M P L E T E D ===============================");
+    // System.out.println("\n=============================== C O M P L E T E D ===============================");
     System.out.println("\nSent: " + fileName);
-    System.out.println("To: " + hostName+":"+portNumber);
+    // System.out.println("To: " + hostName+":"+portNumber);
   }
 }
