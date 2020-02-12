@@ -1,0 +1,202 @@
+
+=============================== Date: 2020-02-08 2:46:46 PM =============================== 
+Test 1: Retransmissions: 0 Throughput: 25.735294117647058
+Test 2: Retransmissions: 0 Throughput: 25.735294117647058
+Test 3: Retransmissions: 0 Throughput: 25.735294117647058
+Test 4: Retransmissions: 0 Throughput: 25.735294117647058
+Test 5: Retransmissions: 0 Throughput: 25.735294117647058
+-------------------------------------------------------------------------------------------------
+
+Timeout: 100   Retransmissions: 0.0    Avg.Throughput: 25.73529411764706
+
+-------------------------------------------------------------------------------------------------
+Test 1: Retransmissions: 0 Throughput: 25.735294117647058
+Test 2: Retransmissions: 0 Throughput: 25.735294117647058
+Test 3: Retransmissions: 0 Throughput: 25.735294117647058
+Test 4: Retransmissions: 0 Throughput: 26.515151515151516
+Test 5: Retransmissions: 0 Throughput: 25.735294117647058
+-------------------------------------------------------------------------------------------------
+
+Timeout: 75   Retransmissions: 0.0    Avg.Throughput: 25.891265597147946
+
+-------------------------------------------------------------------------------------------------
+Test 1: Retransmissions: 0 Throughput: 25.735294117647058
+Test 2: Retransmissions: 0 Throughput: 25.735294117647058
+Test 3: Retransmissions: 0 Throughput: 25.735294117647058
+Test 4: Retransmissions: 0 Throughput: 25.735294117647058
+Test 5: Retransmissions: 0 Throughput: 25.735294117647058
+-------------------------------------------------------------------------------------------------
+
+Timeout: 50   Retransmissions: 0.0    Avg.Throughput: 25.73529411764706
+
+-------------------------------------------------------------------------------------------------
+Test 1: Retransmissions: 0 Throughput: 26.515151515151516
+Test 2: Retransmissions: 662 Throughput: 25.735294117647058
+Test 3: Retransmissions: 0 Throughput: 25.735294117647058
+Test 4: Retransmissions: 0 Throughput: 25.0
+Test 5: Retransmissions: 0 Throughput: 25.735294117647058
+-------------------------------------------------------------------------------------------------
+
+Timeout: 40   Retransmissions: 662.0    Avg.Throughput: 25.744206773618536
+
+-------------------------------------------------------------------------------------------------
+Test 1: Retransmissions: 879 Throughput: 25.735294117647058
+Test 2: Retransmissions: 1628 Throughput: 25.0
+Test 3: Retransmissions: 1341 Throughput: 25.0
+Test 4: Retransmissions: 1642 Throughput: 25.0
+Test 5: Retransmissions: 876 Throughput: 25.0
+-------------------------------------------------------------------------------------------------
+
+Timeout: 30   Retransmissions: 6366.0    Avg.Throughput: 25.147058823529413
+
+-------------------------------------------------------------------------------------------------
+Test 1: Retransmissions: 1395 Throughput: 25.0
+Test 2: Retransmissions: 2346 Throughput: 25.0
+Test 3: Retransmissions: 2651 Throughput: 25.0
+Test 4: Retransmissions: 3781 Throughput: 25.0
+Test 5: Retransmissions: 4820 Throughput: 25.0
+-------------------------------------------------------------------------------------------------
+
+Timeout: 25   Retransmissions: 14993.0    Avg.Throughput: 25.0
+
+-------------------------------------------------------------------------------------------------
+Test 1: Retransmissions: 3863 Throughput: 25.0
+Test 2: Retransmissions: 3789 Throughput: 25.0
+Test 3: Retransmissions: 1188 Throughput: 0.0
+=============================== Date: 2020-02-08 3:11:37 PM =============================== 
+Test 1: Retransmissions: 6287 Throughput: 25.0
+Test 2: Retransmissions: 3511 Throughput: 25.0
+Test 3: Retransmissions: 2976 Throughput: 25.0
+Test 4: Retransmissions: 3399 Throughput: 25.0
+Test 5: Retransmissions: 3422 Throughput: 25.0
+-------------------------------------------------------------------------------------------------
+
+Timeout: 20   Retransmissions: 19595.0    Avg.Throughput: 25.0
+
+-------------------------------------------------------------------------------------------------
+Test 1: Retransmissions: 5002 Throughput: 25.0
+Test 2: Retransmissions: 3167 Throughput: 25.0
+Test 3: Retransmissions: 6314 Throughput: 0.0
+=============================== Date: 2020-02-08 3:34:33 PM =============================== 
+Test 1: Retransmissions: 3304 Throughput: 25.0
+Test 2: Retransmissions: 3730 Throughput: 26.515151515151516
+Test 3: Retransmissions: 3713 Throughput: 25.0
+Test 4: Retransmissions: 2782 Throughput: 0.0
+=============================== Date: 2020-02-08 3:54:58 PM =============================== 
+Test 1: Retransmissions: 4034 Throughput: 25.0
+Test 2: Retransmissions: 2980 Throughput: 25.0
+Test 3: Retransmissions: 4596 Throughput: 25.0
+Test 4: Retransmissions: 5154 Throughput: 25.0
+Test 5: Retransmissions: 3734 Throughput: 25.0
+-------------------------------------------------------------------------------------------------
+
+Timeout: 20   Retransmissions: 20498.0    Avg.Throughput: 25.0
+
+-------------------------------------------------------------------------------------------------
+Test 1: Retransmissions: 5048 Throughput: 25.0
+Test 2: Retransmissions: 5763 Throughput: 25.0
+Test 3: Retransmissions: 4215 Throughput: 25.0
+Test 4: Retransmissions: 7056 Throughput: 25.0
+Test 5: Retransmissions: 2287 Throughput: 25.0
+-------------------------------------------------------------------------------------------------
+
+Timeout: 15   Retransmissions: 24369.0    Avg.Throughput: 25.0
+
+-------------------------------------------------------------------------------------------------
+Test 1: Retransmissions: 9887 Throughput: 25.0
+Test 2: Retransmissions: 5603 Throughput: 25.0
+Test 3: Retransmissions: 1936 Throughput: 0.0
+=============================== Date: 2020-02-08 4:28:11 PM =============================== 
+Test 1: Retransmissions: 6144 Throughput: 25.0
+Test 2: Retransmissions: 3256 Throughput: 25.0
+Test 3: Retransmissions: 4478 Throughput: 25.0
+Test 4: Retransmissions: 4319 Throughput: 25.0
+Test 5: Retransmissions: 3573 Throughput: 25.0
+-------------------------------------------------------------------------------------------------
+
+Timeout: 20   Retransmissions: 21770.0    Avg.Throughput: 25.0
+
+-------------------------------------------------------------------------------------------------
+Test 1: Retransmissions: 6640 Throughput: 25.0
+Test 2: Retransmissions: 4575 Throughput: 25.0
+Test 3: Retransmissions: 5583 Throughput: 25.0
+Test 4: Retransmissions: 5309 Throughput: 25.0
+Test 5: Retransmissions: 9982 Throughput: 25.0
+-------------------------------------------------------------------------------------------------
+
+Timeout: 15   Retransmissions: 32089.0    Avg.Throughput: 25.0
+
+-------------------------------------------------------------------------------------------------
+Test 1: Retransmissions: 4555 Throughput: 0.0
+=============================== Date: 2020-02-08 4:35:18 PM =============================== 
+Test 1: Retransmissions: 2614 Throughput: 0.0
+=============================== Date: 2020-02-08 4:36:35 PM =============================== 
+Test 1: Retransmissions: 11966 Throughput: 25.0
+Test 2: Retransmissions: 6448 Throughput: 25.0
+Test 3: Retransmissions: 8821 Throughput: 25.0
+Test 4: Retransmissions: 3229 Throughput: 0.0
+=============================== Date: 2020-02-08 4:40:36 PM =============================== 
+Test 1: Retransmissions: 8747 Throughput: 25.735294117647058
+Test 2: Retransmissions: 7542 Throughput: 25.0
+Test 3: Retransmissions: 6680 Throughput: 25.735294117647058
+Test 4: Retransmissions: 15106 Throughput: 25.0
+Test 5: Retransmissions: 9652 Throughput: 25.0
+-------------------------------------------------------------------------------------------------
+
+Timeout: 10   Retransmissions: 47727.0    Avg.Throughput: 25.294117647058822
+
+-------------------------------------------------------------------------------------------------
+=============================== Date: 2020-02-08 4:44:30 PM =============================== 
+Test 1: Retransmissions: 7398 Throughput: 25.0
+Test 2: Retransmissions: 7420 Throughput: 25.0
+Test 3: Retransmissions: 15228 Throughput: 0.0
+=============================== Date: 2020-02-08 4:48:31 PM =============================== 
+Test 1: Retransmissions: 18812 Throughput: 0.0
+=============================== Date: 2020-02-08 5:02:12 PM =============================== 
+Test 1: Retransmissions: 7991 Throughput: 25.0
+Test 2: Retransmissions: 8411 Throughput: 25.735294117647058
+Test 3: Retransmissions: 5160 Throughput: 0.0
+=============================== Date: 2020-02-08 5:04:56 PM =============================== 
+Test 1: Retransmissions: 7843 Throughput: 25.0
+=============================== Date: 2020-02-08 5:07:10 PM =============================== 
+Test 1: Retransmissions: 1 Throughput: 26.515151515151516
+Test 2: Retransmissions: 1 Throughput: 25.735294117647058
+Test 3: Retransmissions: 1 Throughput: 27.34375
+Test 4: Retransmissions: 1 Throughput: 26.515151515151516
+Test 5: Retransmissions: 1 Throughput: 25.735294117647058
+-------------------------------------------------------------------------------------------------
+
+Timeout: 10   Retransmissions: 5.0    Avg.Throughput: 26.368928253119428
+
+-------------------------------------------------------------------------------------------------
+Test 1: Retransmissions: 1 Throughput: 26.515151515151516
+=============================== Date: 2020-02-08 5:11:30 PM =============================== 
+Test 1: Retransmissions: 1 Throughput: 25.735294117647058
+Test 2: Retransmissions: 1 Throughput: 25.735294117647058
+Test 3: Retransmissions: 1 Throughput: 25.735294117647058
+Test 4: Retransmissions: 1 Throughput: 25.735294117647058
+Test 5: Retransmissions: 1 Throughput: 25.735294117647058
+-------------------------------------------------------------------------------------------------
+
+Timeout: 5   Retransmissions: 5.0    Avg.Throughput: 25.73529411764706
+
+-------------------------------------------------------------------------------------------------
+=============================== Date: 2020-02-08 5:14:36 PM =============================== 
+Test 1: Retransmissions: 1 Throughput: 25.735294117647058
+=============================== Date: 2020-02-08 5:19:20 PM =============================== 
+Test 1: Retransmissions: 1 Throughput: 26.515151515151516
+=============================== Date: 2020-02-08 5:23:42 PM =============================== 
+Test 1: Retransmissions: 1 Throughput: 25.735294117647058
+Test 2: Retransmissions: 1 Throughput: 25.735294117647058
+Test 3: Retransmissions: 1 Throughput: 25.735294117647058
+Test 4: Retransmissions: 1 Throughput: 25.735294117647058
+Test 5: Retransmissions: 1 Throughput: 25.735294117647058
+-------------------------------------------------------------------------------------------------
+
+Timeout: 5   Retransmissions: 5.0    Avg.Throughput: 25.73529411764706
+
+-------------------------------------------------------------------------------------------------
+=============================== Date: 2020-02-08 5:28:34 PM =============================== 
+Test 1: Retransmissions: 1 Throughput: 25.735294117647058
+=============================== Date: 2020-02-08 5:29:34 PM =============================== 
+Test 1: Retransmissions: 1 Throughput: 25.735294117647058

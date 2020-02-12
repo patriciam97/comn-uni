@@ -15,6 +15,7 @@ public class Sender1b {
 
     public static void sendFile(String hostName, int portNumber, String fileName) throws IOException {
 
+<<<<<<< HEAD
             DatagramSocket senderSocket = new DatagramSocket();
             InetAddress ipAddress = InetAddress.getByName(hostName);
             File file = new File(fileName);
@@ -26,10 +27,31 @@ public class Sender1b {
             Date date = new Date();
             long timeStartedMS = date.getTime();
 
+=======
+            // create sender socket
+            DatagramSocket senderSocket = new DatagramSocket();
+            // translate hostName to an IP address using DNS
+            InetAddress ipAddress = InetAddress.getByName(hostName);
+            // read file from fileName
+            File file = new File(fileName);
+            // convert file into a stream of bytes
+            InputStream fileStream = new FileInputStream(file);
+            // create a byte array to split the fileStream into packets later
+            byte[] fileByteArray = new byte[(int)file.length()];
+            System.out.println("Byte array of size "+ (int)file.length()+" has been created.");
+            // // split the stream of bytes into a byte array
+            fileStream.read(fileByteArray);
+            // timer needed to calculate avg throughput at the end
+            // Timer timer = new Timer(0);
+            Date date = new Date();
+            long timeMilli = date.getTime();
+            // sequence number and flag will be needed for the header of each packet
+>>>>>>> f8e7d0953eb430adc27c21a33abc8cd4ea35a612
             int sequenceNumber = 0;
             boolean flagLastMessage = false;
             // sequence number to keep track the acknowledged packets
             int sequenceNumberACK = 0;
+<<<<<<< HEAD
 
             int retransmissionCounter = 0;
 
@@ -40,6 +62,19 @@ public class Sender1b {
                 messageToSend[0] = (byte)(sequenceNumber >> 8);
                 messageToSend[1] = (byte)(sequenceNumber);
 
+=======
+            // counter for retransmissions
+            int retransmissionCounter = 0;
+            // for each message that is being generated
+
+            for (int i=0; i < fileByteArray.length; i +=1024 ) { //1KB = 1024 byile file = new File(fileName);tes  - 3 bytes for header = 1021
+                sequenceNumber += 1;
+                // byte array of all packets
+                byte[] messageToSend = new byte[1027];
+                // duplicate sequence number in header will be used to check for corrupted packets
+                messageToSend[0] = (byte)(sequenceNumber >> 8);
+                messageToSend[1] = (byte)(sequenceNumber);
+>>>>>>> f8e7d0953eb430adc27c21a33abc8cd4ea35a612
                 // check if this packet is the last packet
                 if ((i+1024) >= fileByteArray.length) {
                     // set flagLastMessage to 1 if it's the last packet to send
@@ -50,7 +85,11 @@ public class Sender1b {
                     flagLastMessage = false;
                     messageToSend[2] = (byte)(0);
                 }
+<<<<<<< HEAD
               // append data bytes
+=======
+              // append message bytes
+>>>>>>> f8e7d0953eb430adc27c21a33abc8cd4ea35a612
               if (!flagLastMessage) {
                   for (int j=0; j <= 1023; j++) {
                     messageToSend[j+3] = fileByteArray[i+j];
@@ -67,6 +106,10 @@ public class Sender1b {
               }
               DatagramPacket packetToSend = new DatagramPacket(messageToSend, messageToSend.length, ipAddress, portNumber);
               senderSocket.send(packetToSend);
+<<<<<<< HEAD
+=======
+              System.out.println("Sent: Sequence number = " + sequenceNumber + "    Flag = " + flagLastMessage + "   Length: "+messageToSend.length);
+>>>>>>> f8e7d0953eb430adc27c21a33abc8cd4ea35a612
               int maxRetransmissionsForLastPackage = 9;
               // verifying acknowledgements
               boolean ackRecievedCorrect = false;
@@ -74,10 +117,16 @@ public class Sender1b {
 
               while (!ackRecievedCorrect) {
 
+<<<<<<< HEAD
+=======
+                  System.out.println("Waiting for an acknowledgement. . ." + flagLastMessage);
+
+>>>>>>> f8e7d0953eb430adc27c21a33abc8cd4ea35a612
                   byte[] ack = new byte[2];
                   DatagramPacket ackPacket = new DatagramPacket(ack, ack.length);
 
                   try {
+<<<<<<< HEAD
 
                       senderSocket.setSoTimeout(5);
                       senderSocket.receive(ackPacket);
@@ -92,26 +141,66 @@ public class Sender1b {
                   // Break if there is an ack so that the next packet can be sent
                   if ((sequenceNumberACK == sequenceNumber) && (ackPacketReceived)) {
                       ackRecievedCorrect = true;
+=======
+
+                      senderSocket.setSoTimeout(100);
+                      senderSocket.receive(ackPacket);
+                      sequenceNumberACK = ((ack[0] & 0xff) << 8) + (ack[1] & 0xff);
+                      ackPacketReceived = true;
+
+                  } catch (SocketTimeoutException e) {
+
+                      System.out.println("Ack missing:   socket timed out");
+                      ackPacketReceived = false;
+                      //e.printStackTrace();
+                  }
+
+                  // Break if there is an ack so that the next packet can be sent
+                  if ((sequenceNumberACK == sequenceNumber) && (ackPacketReceived)) {
+                      ackRecievedCorrect = true;
+                      System.out.println("Ack received: Sequence Number = " + sequenceNumberACK);
+>>>>>>> f8e7d0953eb430adc27c21a33abc8cd4ea35a612
                       break;
                   } else if (maxRetransmissionsForLastPackage>=0 && flagLastMessage) { // Resend packet
                       senderSocket.send(packetToSend);
                       maxRetransmissionsForLastPackage-=1;
+<<<<<<< HEAD
+=======
+                      System.out.println("Resending: Sequence Number = " + sequenceNumber);
+>>>>>>> f8e7d0953eb430adc27c21a33abc8cd4ea35a612
                       // Increment retransmission counter
                       retransmissionCounter += 1;
                       break;
                   }else{
                       senderSocket.send(packetToSend);
+<<<<<<< HEAD
+=======
+                      System.out.println("Resending: Sequence Number = " + sequenceNumber);
+>>>>>>> f8e7d0953eb430adc27c21a33abc8cd4ea35a612
                       retransmissionCounter += 1;
                   }
                  }
             }
             senderSocket.close();
+<<<<<<< HEAD
+=======
+            System.out.println("To: " + hostName+":"+portNumber);
+>>>>>>> f8e7d0953eb430adc27c21a33abc8cd4ea35a612
             // Calculate the average throughput
             int fileSizeKB = (fileByteArray.length) / 1027;
             date = new Date();
             long timeDoneMS = date.getTime();
+<<<<<<< HEAD
             double transferTime = (timeDoneMS - timeStartedMS)/ 1000;
             double throughput = (double) fileSizeKB / transferTime;
             System.out.println(retransmissionCounter + " " + throughput);
+=======
+            double transferTime = (timeDoneMS - timeMilli)/ 1000;
+            double throughput = (double) fileSizeKB / transferTime;
+            System.out.println("File Size: " + fileSizeKB + " KB");
+            System.out.println("Transfer Time: " + transferTime + " seconds");
+            System.out.println("Throughput: " + throughput + " KBps");
+            System.out.println("Number of retransmissions: " + retransmissionCounter);
+>>>>>>> f8e7d0953eb430adc27c21a33abc8cd4ea35a612
     }
   }

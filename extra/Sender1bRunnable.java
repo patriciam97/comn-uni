@@ -92,22 +92,24 @@ public class Sender1bRunnable implements Runnable{
             messageToSend[1] = (byte)(sequenceNumber);
             messageToSend[2] = (byte)(1);
         }
-
         DatagramPacket packetToSend = new DatagramPacket(messageToSend, messageToSend.length, ipAddress, portNumber);
         senderSocket.send(packetToSend);
         System.out.println("Sent: Sequence number = " + sequenceNumber + "    Flag = " + flagLastMessage + "   Length: "+messageToSend.length);
-
+        int maxRetransmissionsForLastPackage = 9;
         // verifying acknowledgements
         boolean ackRecievedCorrect = false;
         boolean ackPacketReceived = false;
 
         while (!ackRecievedCorrect) {
-            // Check for an ack
+
+            System.out.println("Waiting for an acknowledgement. . ." + flagLastMessage);
+
             byte[] ack = new byte[2];
             DatagramPacket ackPacket = new DatagramPacket(ack, ack.length);
 
             try {
                 senderSocket.setSoTimeout(timeout);
+                System.out.println("yp.")
                 senderSocket.receive(ackPacket);
                 sequenceNumberACK = ((ack[0] & 0xff) << 8) + (ack[1] & 0xff);
                 ackPacketReceived = true;
@@ -122,11 +124,16 @@ public class Sender1bRunnable implements Runnable{
                 ackRecievedCorrect = true;
                 System.out.println("Ack received: Sequence Number = " + sequenceNumberACK);
                 break;
-            } else { // Resend packet
+            } else if (maxRetransmissionsForLastPackage>=0 && flagLastMessage) { // Resend packet
+                senderSocket.send(packetToSend);
+                maxRetransmissionsForLastPackage-=1;
+                System.out.println("Resending: Sequence Number = " + sequenceNumber);
+                // Increment retransmission counter
+                retransmissionCounter += 1;
+                break;
+            }else{
                 senderSocket.send(packetToSend);
                 System.out.println("Resending: Sequence Number = " + sequenceNumber);
-
-                // Increment retransmission counter
                 retransmissionCounter += 1;
             }
            }
