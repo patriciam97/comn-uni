@@ -106,10 +106,6 @@ public class Sender1b {
               }
               DatagramPacket packetToSend = new DatagramPacket(messageToSend, messageToSend.length, ipAddress, portNumber);
               senderSocket.send(packetToSend);
-<<<<<<< HEAD
-=======
-              System.out.println("Sent: Sequence number = " + sequenceNumber + "    Flag = " + flagLastMessage + "   Length: "+messageToSend.length);
->>>>>>> f8e7d0953eb430adc27c21a33abc8cd4ea35a612
               int maxRetransmissionsForLastPackage = 9;
               // verifying acknowledgements
               boolean ackRecievedCorrect = false;
@@ -117,16 +113,10 @@ public class Sender1b {
 
               while (!ackRecievedCorrect) {
 
-<<<<<<< HEAD
-=======
-                  System.out.println("Waiting for an acknowledgement. . ." + flagLastMessage);
-
->>>>>>> f8e7d0953eb430adc27c21a33abc8cd4ea35a612
                   byte[] ack = new byte[2];
                   DatagramPacket ackPacket = new DatagramPacket(ack, ack.length);
 
                   try {
-<<<<<<< HEAD
 
                       senderSocket.setSoTimeout(5);
                       senderSocket.receive(ackPacket);
@@ -141,66 +131,26 @@ public class Sender1b {
                   // Break if there is an ack so that the next packet can be sent
                   if ((sequenceNumberACK == sequenceNumber) && (ackPacketReceived)) {
                       ackRecievedCorrect = true;
-=======
-
-                      senderSocket.setSoTimeout(100);
-                      senderSocket.receive(ackPacket);
-                      sequenceNumberACK = ((ack[0] & 0xff) << 8) + (ack[1] & 0xff);
-                      ackPacketReceived = true;
-
-                  } catch (SocketTimeoutException e) {
-
-                      System.out.println("Ack missing:   socket timed out");
-                      ackPacketReceived = false;
-                      //e.printStackTrace();
-                  }
-
-                  // Break if there is an ack so that the next packet can be sent
-                  if ((sequenceNumberACK == sequenceNumber) && (ackPacketReceived)) {
-                      ackRecievedCorrect = true;
-                      System.out.println("Ack received: Sequence Number = " + sequenceNumberACK);
->>>>>>> f8e7d0953eb430adc27c21a33abc8cd4ea35a612
                       break;
                   } else if (maxRetransmissionsForLastPackage>=0 && flagLastMessage) { // Resend packet
                       senderSocket.send(packetToSend);
                       maxRetransmissionsForLastPackage-=1;
-<<<<<<< HEAD
-=======
-                      System.out.println("Resending: Sequence Number = " + sequenceNumber);
->>>>>>> f8e7d0953eb430adc27c21a33abc8cd4ea35a612
                       // Increment retransmission counter
                       retransmissionCounter += 1;
                       break;
                   }else{
                       senderSocket.send(packetToSend);
-<<<<<<< HEAD
-=======
-                      System.out.println("Resending: Sequence Number = " + sequenceNumber);
->>>>>>> f8e7d0953eb430adc27c21a33abc8cd4ea35a612
                       retransmissionCounter += 1;
                   }
                  }
             }
             senderSocket.close();
-<<<<<<< HEAD
-=======
-            System.out.println("To: " + hostName+":"+portNumber);
->>>>>>> f8e7d0953eb430adc27c21a33abc8cd4ea35a612
             // Calculate the average throughput
             int fileSizeKB = (fileByteArray.length) / 1027;
             date = new Date();
             long timeDoneMS = date.getTime();
-<<<<<<< HEAD
             double transferTime = (timeDoneMS - timeStartedMS)/ 1000;
             double throughput = (double) fileSizeKB / transferTime;
             System.out.println(retransmissionCounter + " " + throughput);
-=======
-            double transferTime = (timeDoneMS - timeMilli)/ 1000;
-            double throughput = (double) fileSizeKB / transferTime;
-            System.out.println("File Size: " + fileSizeKB + " KB");
-            System.out.println("Transfer Time: " + transferTime + " seconds");
-            System.out.println("Throughput: " + throughput + " KBps");
-            System.out.println("Number of retransmissions: " + retransmissionCounter);
->>>>>>> f8e7d0953eb430adc27c21a33abc8cd4ea35a612
     }
   }
