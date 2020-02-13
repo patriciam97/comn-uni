@@ -49,8 +49,6 @@ public class Receiver1b {
           int sequenceNumberA = (messageReceived[0] & 0xff) << 8;
           int sequenceNumberB = (messageReceived[1] & 0xff);
           sequenceNumber = sequenceNumberA + sequenceNumberB;
-          // duplicate detection at the receiver
-
 
           if ((previousSequenceNumber+1) ==  sequenceNumber) {
               previousSequenceNumber = sequenceNumber;
