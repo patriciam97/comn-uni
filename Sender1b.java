@@ -15,7 +15,6 @@ public class Sender1b {
 
     public static void sendFile(String hostName, int portNumber, String fileName) throws IOException {
 
-<<<<<<< HEAD
             DatagramSocket senderSocket = new DatagramSocket();
             InetAddress ipAddress = InetAddress.getByName(hostName);
             File file = new File(fileName);
@@ -27,31 +26,10 @@ public class Sender1b {
             Date date = new Date();
             long timeStartedMS = date.getTime();
 
-=======
-            // create sender socket
-            DatagramSocket senderSocket = new DatagramSocket();
-            // translate hostName to an IP address using DNS
-            InetAddress ipAddress = InetAddress.getByName(hostName);
-            // read file from fileName
-            File file = new File(fileName);
-            // convert file into a stream of bytes
-            InputStream fileStream = new FileInputStream(file);
-            // create a byte array to split the fileStream into packets later
-            byte[] fileByteArray = new byte[(int)file.length()];
-            System.out.println("Byte array of size "+ (int)file.length()+" has been created.");
-            // // split the stream of bytes into a byte array
-            fileStream.read(fileByteArray);
-            // timer needed to calculate avg throughput at the end
-            // Timer timer = new Timer(0);
-            Date date = new Date();
-            long timeMilli = date.getTime();
-            // sequence number and flag will be needed for the header of each packet
->>>>>>> f8e7d0953eb430adc27c21a33abc8cd4ea35a612
             int sequenceNumber = 0;
             boolean flagLastMessage = false;
             // sequence number to keep track the acknowledged packets
             int sequenceNumberACK = 0;
-<<<<<<< HEAD
 
             int retransmissionCounter = 0;
 
@@ -62,19 +40,6 @@ public class Sender1b {
                 messageToSend[0] = (byte)(sequenceNumber >> 8);
                 messageToSend[1] = (byte)(sequenceNumber);
 
-=======
-            // counter for retransmissions
-            int retransmissionCounter = 0;
-            // for each message that is being generated
-
-            for (int i=0; i < fileByteArray.length; i +=1024 ) { //1KB = 1024 byile file = new File(fileName);tes  - 3 bytes for header = 1021
-                sequenceNumber += 1;
-                // byte array of all packets
-                byte[] messageToSend = new byte[1027];
-                // duplicate sequence number in header will be used to check for corrupted packets
-                messageToSend[0] = (byte)(sequenceNumber >> 8);
-                messageToSend[1] = (byte)(sequenceNumber);
->>>>>>> f8e7d0953eb430adc27c21a33abc8cd4ea35a612
                 // check if this packet is the last packet
                 if ((i+1024) >= fileByteArray.length) {
                     // set flagLastMessage to 1 if it's the last packet to send
@@ -85,11 +50,7 @@ public class Sender1b {
                     flagLastMessage = false;
                     messageToSend[2] = (byte)(0);
                 }
-<<<<<<< HEAD
               // append data bytes
-=======
-              // append message bytes
->>>>>>> f8e7d0953eb430adc27c21a33abc8cd4ea35a612
               if (!flagLastMessage) {
                   for (int j=0; j <= 1023; j++) {
                     messageToSend[j+3] = fileByteArray[i+j];
