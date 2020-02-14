@@ -23,7 +23,7 @@ public class Sender1b {
             fileStream.close();
             // time needed to calculate avg throughput at the end
             Date date = new Date();
-            long timeStartedMS = date.getTime();
+            long timeStartedSendingMS = date.getTime();
 
             int sequenceNumber = 0;
             boolean flagLastMessage = false;
@@ -66,12 +66,12 @@ public class Sender1b {
               }
               DatagramPacket packetToSend = new DatagramPacket(messageToSend, messageToSend.length, ipAddress, portNumber);
               senderSocket.send(packetToSend);
-              int maxRetransmissionsForLastPackage = 9;
+              int maxRetransmissionsLastPackage = 9;
               // verifying acknowledgements
-              boolean ackRecievedCorrect = false;
+              boolean ackRecievedSomething = false;
               boolean ackPacketReceived = false;
 
-              while (!ackRecievedCorrect) {
+              while (!ackRecievedSomething) {
 
                   byte[] ack = new byte[2];
                   DatagramPacket ackPacket = new DatagramPacket(ack, ack.length);
@@ -90,13 +90,13 @@ public class Sender1b {
 
                   // Break if there is an ack so that the next packet can be sent
                   if ((sequenceNumberACK == sequenceNumber) && (ackPacketReceived)) {
-                      ackRecievedCorrect = true;
+                      ackRecievedSomething = true;
                       break;
-                  } else if (maxRetransmissionsForLastPackage>=0 && flagLastMessage) { // Resend packet
+                  } else if (maxRetransmissionsLastPackage>=0 && flagLastMessage) { // Resend packet
                       senderSocket.send(packetToSend);
-                      maxRetransmissionsForLastPackage-=1;
-                      // Increment retransmission counter
+                      maxRetransmissionsLastPackage-=1;
                       retransmissionCounter += 1;
+                  } else if (maxRetransmissionsLastPackage==-1 && flagLastMessage) {
                       break;
                   }else{
                       senderSocket.send(packetToSend);
@@ -106,11 +106,11 @@ public class Sender1b {
             }
             senderSocket.close();
             // Calculate the average throughput
-            int fileSizeKB = (fileByteArray.length) / 1027;
+            int filesizeKB = (fileByteArray.length) / 1027;
             date = new Date();
-            long timeDoneMS = date.getTime();
-            double transferTime = (timeDoneMS - timeStartedMS)/ 1000;
-            double throughput = (double) fileSizeKB / transferTime;
+            long timeDoneSendingMS = date.getTime();
+            double transferTime = (timeDoneSendingMS - timeStartedSendingMS)/ 1000;
+            double throughput = (double) filesizeKB / transferTime;
             System.out.println(retransmissionCounter + " " + throughput);
     }
   }
