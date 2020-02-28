@@ -1,7 +1,48 @@
 
 import java.io.*;
 import java.net.*;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.concurrent.Semaphore;
+
+class SendPacket implements Runnable {
+    DatagramSocket senderSocket;
+    InetAddress ipAddress;
+    int portNumber;
+    byte[] header;
+    byte[] data;
+    int packetSize;
+    Integer startTimer;
+
+    public SendPacket(DatagramSocket senderSocket, InetAddress ipAddress, int portNumber, byte[] header, byte[] data,
+            int packetSize, Integer startTimer) {
+        this.senderSocket = senderSocket;
+        this.ipAddress = ipAddress;
+        this.portNumber = portNumber;
+        this.header = header;
+        this.data = data;
+        this.packetSize = packetSize;
+        this.startTimer = startTimer;
+    }
+
+    @Override
+    public void run() {
+        byte[] messageToSend = new byte[this.packetSize];
+        messageToSend[0] = header[0];
+        messageToSend[1] = header[1];
+        messageToSend[2] = header[3];
+        for (int i = 3; i < packetSize; i++) {
+            messageToSend[i] = data[i - 3];
+        }
+        DatagramPacket packetToSend = new DatagramPacket(messageToSend, messageToSend.length, this.ipAddress,
+                this.portNumber);
+        this.senderSocket.send(packetToSend);
+        if (this.startTimer != null) {
+            senderSocket.setSoTimeout(this.startTimer);
+        }
+
+    }
+}
 
 public class Sender2a {
 
@@ -24,9 +65,6 @@ public class Sender2a {
         byte[] fileByteArray = new byte[(int) file.length()];
         fileStream.read(fileByteArray);
         fileStream.close();
-        // time needed to calculate avg throughput at the end
-        Date date = new Date();
-        long timeStartedSendingMS = date.getTime();
 
         int sequenceNumber = 0;
         boolean flagLastMessage = false;
@@ -35,86 +73,50 @@ public class Sender2a {
 
         int retransmissionCounter = 0;
         int retransmissionTimeout = retryTimeout;
+
+        int base = 1;
+        int nextSeqNum = 1;
+
+        // time needed to calculate avg throughput at the end
+        Date date = new Date();
+        long timeStartedSendingMS = date.getTime();
+
         // for each message that is being generated
-        for (int i = 0; i < fileByteArray.length; i += 1024) {
-            sequenceNumber += 1;
-            byte[] messageToSend = new byte[1027];
-            messageToSend[0] = (byte) (sequenceNumber >> 8);
-            messageToSend[1] = (byte) (sequenceNumber);
+        for (int i = 0; i < fileByteArray.length; i += 1024 * windowSize) {
+            if (nextSeqNum < base + windowSize) {
+                for (int j = i; j <= i * 1024 * windowSize; j += 1024) {
+                    if (j >= fileByteArray.length) {
+                        break;
+                    }
+                    byte[] header = { (byte) (sequenceNumber >> 8), (byte) (sequenceNumber), (byte) 0 };
+                    byte[] data;
+                    int packetSize = 1024;
+                    if ((i + 1024) >= fileByteArray.length) {
+                        // set flagLastMessage to 1 if it's the last packet to send
+                        flagLastMessage = true;
+                        header[2] = (byte) (1);
+                        data = Arrays.copyOfRange(fileByteArray, j, fileByteArray.length - 1);
+                        packetSize = (fileByteArray.length - 1) + 3;
 
-            // check if this packet is the last packet
-            if ((i + 1024) >= fileByteArray.length) {
-                // set flagLastMessage to 1 if it's the last packet to send
-                flagLastMessage = true;
-                // add it in the header
-                messageToSend[2] = (byte) (1);
-            } else {
-                flagLastMessage = false;
-                messageToSend[2] = (byte) (0);
-            }
-            // append data bytes
-            if (!flagLastMessage) {
-                for (int j = 0; j <= 1023; j++) {
-                    messageToSend[j + 3] = fileByteArray[i + j];
-                }
-            } else if (flagLastMessage) {
-                // append whatever is left
-                messageToSend = new byte[(fileByteArray.length - i) + 3];
-                for (int j = 0; j < (fileByteArray.length - i); j++) {
-                    messageToSend[j + 3] = fileByteArray[i + j];
-                }
-                messageToSend[0] = (byte) (sequenceNumber >> 8);
-                messageToSend[1] = (byte) (sequenceNumber);
-                messageToSend[2] = (byte) (1);
-            }
-            DatagramPacket packetToSend = new DatagramPacket(messageToSend, messageToSend.length, ipAddress,
-                    portNumber);
-            senderSocket.send(packetToSend);
-            int maxRetransmissionsLastPackage = 9;
-            // verifying acknowledgements
-            boolean ackRecievedSomething = false;
-            boolean ackPacketReceived = false;
-
-            while (!ackRecievedSomething) {
-
-                byte[] ack = new byte[2];
-                DatagramPacket ackPacket = new DatagramPacket(ack, ack.length);
-
-                try {
-
-                    senderSocket.setSoTimeout(retransmissionTimeout);
-                    senderSocket.receive(ackPacket);
-                    sequenceNumberACK = ((ack[0] & 0xff) << 8) + (ack[1] & 0xff);
-                    ackPacketReceived = true;
-
-                } catch (SocketTimeoutException e) {
-
-                    ackPacketReceived = false;
-                }
-
-                // Break if there is an ack so that the next packet can be sent
-                if ((sequenceNumberACK == sequenceNumber) && (ackPacketReceived)) {
-                    ackRecievedSomething = true;
-                    break;
-                } else if (maxRetransmissionsLastPackage >= 0 && flagLastMessage) { // Resend packet
-                    senderSocket.send(packetToSend);
-                    maxRetransmissionsLastPackage -= 1;
-                    retransmissionCounter += 1;
-                } else if (maxRetransmissionsLastPackage == -1 && flagLastMessage) {
-                    break;
-                } else {
-                    senderSocket.send(packetToSend);
-                    retransmissionCounter += 1;
+                    } else {
+                        flagLastMessage = false;
+                        header[2] = (byte) (0);
+                        data = Arrays.copyOfRange(fileByteArray, j, j + 1024);
+                    }
+                    // start thread to send packet
+                    SendPacket sendPacket;
+                    if (base == nextSeqNum) {
+                        sendPacket = new SendPacket(senderSocket, ipAddress, portNumber, header, data, packetSize,
+                                retryTimeout);
+                    } else {
+                        sendPacket = new SendPacket(senderSocket, ipAddress, portNumber, header, data, packetSize,
+                                null);
+                    }
+                    Thread thread = new Thread(sendPacket);
+                    thread.start();
+                    nextSeqNum += 1;
                 }
             }
         }
-        senderSocket.close();
-        // Calculate the average throughput
-        int filesizeKB = (fileByteArray.length) / 1027;
-        date = new Date();
-        long timeDoneSendingMS = date.getTime();
-        double transferTime = (timeDoneSendingMS - timeStartedSendingMS) / 1000;
-        double throughput = (double) filesizeKB / transferTime;
-        System.out.println(retransmissionCounter + " " + throughput);
     }
 }
