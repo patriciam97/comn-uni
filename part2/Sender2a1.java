@@ -138,6 +138,7 @@ public class Sender2a1 {
             if (timeoutDone) {
                 // done to re-send everything
                 nextSeqNum = base;
+                sequenceNumber = base - 1;
             }
         }
         // at then end
