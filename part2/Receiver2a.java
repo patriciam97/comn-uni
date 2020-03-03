@@ -20,6 +20,7 @@ public class Receiver2a {
         DatagramPacket acknowledgement = new DatagramPacket(ackPacketToSend, ackPacketToSend.length, hostAddress,
                 portNumber);
         receiverSocket.send(acknowledgement);
+        System.out.println("SENT: ACK: " + previousSequenceNumber);
     }
 
     public static void receiveFile(int port, String fileName) throws Exception {
@@ -53,7 +54,7 @@ public class Receiver2a {
             int sequenceNumberA = (messageReceived[0] & 0xff) << 8;
             int sequenceNumberB = (messageReceived[1] & 0xff);
             sequenceNumber = sequenceNumberA + sequenceNumberB;
-
+            System.out.println("RECEIVED: " + sequenceNumber);
             if ((expectedSequenceNum) == sequenceNumber) {
                 // check header to see if it's the last message
                 if ((messageReceived[2] & 0xff) == 1) {
