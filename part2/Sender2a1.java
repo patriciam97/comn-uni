@@ -11,7 +11,7 @@ class AckTimeout implements Callable<Boolean> {
     @Override
     public Boolean call() throws Exception {
         System.out.println("Tmeout thread started");
-        Thread.sleep(2000);
+        Thread.sleep(10);
         return new Boolean(true);
     }
 }
@@ -62,7 +62,7 @@ public class Sender2a1 {
         Future<Boolean> futureCall = null;
 
         while (!ackLastFileReceived) {
-            System.out.println("Base: " + base + " Next seq num: " + nextSeqNum + "window: " + windowSize);
+            System.out.println("Base: " + base + ", NextSeqNum: " + nextSeqNum + ", Window: " + windowSize);
             if (nextSeqNum < base + windowSize) {
                 byte[] messageToSend = new byte[1027];
                 if ((nextSeqNum + 1024) >= fileByteArray.length) {
@@ -102,10 +102,10 @@ public class Sender2a1 {
                 }
             }
             while (!ackRecievedSomething && !timeoutDone) {
-                System.out.println(("here"));
+                System.out.println(("Waiting for ack, timeout not done yet"));
                 byte[] ack = new byte[2];
                 DatagramPacket ackPacket = new DatagramPacket(ack, ack.length);
-                senderSocket.setSoTimeout(25);
+                senderSocket.setSoTimeout(5);
                 try {
                     senderSocket.receive(ackPacket);
                     sequenceNumberACK = ((ack[0] & 0xff) << 8) + (ack[1] & 0xff);
@@ -137,6 +137,7 @@ public class Sender2a1 {
             }
             if (timeoutDone) {
                 // done to re-send everything
+                System.out.println("Resending from " + base + " to " + (base + windowSize - 1));
                 nextSeqNum = base;
                 sequenceNumber = base - 1;
             }
