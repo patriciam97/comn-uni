@@ -1,4 +1,3 @@
-
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -38,9 +37,9 @@ public class Sender2a1 {
         fileStream.read(fileByteArray);
         fileStream.close();
 
-        int sequenceNumber = 0;
+        // int sequenceNumber = 0;
         boolean flagLastMessage = false;
-        // sequence number to keep track the acknowledged packets
+        // // sequence number to keep track the acknowledged packets
         int sequenceNumberACK = 0;
 
         int retransmissionCounter = 0;
@@ -69,9 +68,8 @@ public class Sender2a1 {
                     messageToSend = new byte[fileByteArray.length - nextSeqNum];
                 }
                 for (int i = base; i < base + windowSize; i++) {
-                    sequenceNumber += 1;
-                    messageToSend[0] = (byte) (sequenceNumber >> 8);
-                    messageToSend[1] = (byte) (sequenceNumber);
+                    messageToSend[0] = (byte) (nextSeqNum >> 8);
+                    messageToSend[1] = (byte) (nextSeqNum);
                     flagLastMessage = (nextSeqNum + 1024) >= fileByteArray.length;
                     if (flagLastMessage) {
                         messageToSend[2] = (byte) 1;
@@ -87,7 +85,7 @@ public class Sender2a1 {
                     DatagramPacket packetToSend = new DatagramPacket(messageToSend, messageToSend.length, ipAddress,
                             portNumber);
                     senderSocket.send(packetToSend);
-                    System.out.println("Sent: Sequence number = " + sequenceNumber + "   Flag = " + flagLastMessage
+                    System.out.println("Sent: Sequence number = " + nextSeqNum + "   Flag = " + flagLastMessage
                             + "   Length: " + messageToSend.length);
                     if (base == nextSeqNum) {
                         System.out.println("send.");
@@ -115,7 +113,7 @@ public class Sender2a1 {
                 } catch (SocketTimeoutException e) {
                 }
 
-                if ((sequenceNumberACK == sequenceNumber) && (ackPacketReceived)) {
+                if (ackPacketReceived) {
                     ackRecievedSomething = true;
                     base = sequenceNumberACK + 1;
                     if (base == nextSeqNum) {
@@ -139,7 +137,7 @@ public class Sender2a1 {
                 // done to re-send everything
                 System.out.println("Resending from " + base + " to " + (base + windowSize - 1));
                 nextSeqNum = base;
-                sequenceNumber = base - 1;
+                // sequenceNumber = base - 1;
             }
         }
         // at then end

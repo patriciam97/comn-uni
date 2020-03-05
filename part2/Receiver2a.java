@@ -30,7 +30,7 @@ public class Receiver2a {
         FileOutputStream fileStream = new FileOutputStream(file);
 
         // sequence numbers and flag
-        int sequenceNumber = -1;
+        int sequenceNumber = 0;
         // int previousSequenceNumber = 0;
         int expectedSequenceNum = 1;
         boolean flagLastMessage = false;
@@ -56,6 +56,7 @@ public class Receiver2a {
             sequenceNumber = sequenceNumberA + sequenceNumberB;
             System.out.println("RECEIVED: " + sequenceNumber);
             if ((expectedSequenceNum) == sequenceNumber) {
+                System.out.println("EXPECTED SEQ NUM RECEIVED : " + expectedSequenceNum);
                 // check header to see if it's the last message
                 if ((messageReceived[2] & 0xff) == 1) {
                     flagLastMessage = true;
