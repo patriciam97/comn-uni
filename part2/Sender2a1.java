@@ -7,11 +7,24 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 class AckTimeout implements Callable<Boolean> {
+    Integer retryTimeout;
     @Override
     public Boolean call() throws Exception {
-        System.out.println("Tmeout thread started");
-        Thread.sleep(10);
+        System.out.println("Timeout thread started");
+        Thread.sleep(this.retryTimeout);
         return new Boolean(true);
+    }
+}
+class AckReceive implements Callable<Integer> {
+    DatagramSocket senderSocket;
+    @Override
+    public Integer call() throws Exception {
+        System.out.println(("Waiting for ack, timeout not done yet"));
+        byte[] ack = new byte[2];
+        DatagramPacket ackPacket = new DatagramPacket(ack, ack.length);
+        this.senderSocket.receive(ackPacket);
+        Integer sequenceNumberACK = ((ack[0] & 0xff) << 8) + (ack[1] & 0xff);
+        return sequenceNumberACK;
     }
 }
 
@@ -40,26 +53,30 @@ public class Sender2a1 {
         // int sequenceNumber = 0;
         boolean flagLastMessage = false;
         // // sequence number to keep track the acknowledged packets
-        int sequenceNumberACK = 0;
-
-        int retransmissionCounter = 0;
-        int retransmissionTimeout = retryTimeout;
-        int maxRetransmissionsLastPackage = 10;
-
+        Integer sequenceNumberACK = null;
+        Integer previousSequenceNumberACK = 0;
         int base = 1;
         int nextSeqNum = 1;
         int finalPacketId = (int) Math.ceil((double) file.length() / 1024);
-        boolean sendNextBatch = true;
         boolean timeoutDone = false;
         boolean ackRecievedSomething = false;
-        boolean ackPacketReceived = false;
         // time needed to calculate avg throughput at the end
         Date date = new Date();
         long timeStartedSendingMS = date.getTime();
         boolean ackLastFileReceived = false;
         ExecutorService executor = null;
         Future<Boolean> futureCall = null;
+        Future<Integer> futureAck = null;
+        // Thread waiting to receive things is always running in the background
+        executor = Executors.newCachedThreadPool();
+        AckReceive ackReceive = new AckReceive();
+        ackReceive.senderSocket = senderSocket;
+        futureAck = executor.submit(ackReceive);
 
+        AckTimeout ackThread = new AckTimeout();
+        ackThread.retryTimeout = retryTimeout;
+        
+        // while loop is responsible to send packets
         while (!ackLastFileReceived) {
             System.out.println("Base: " + base + ", NextSeqNum: " + nextSeqNum + ", Window: " + windowSize);
             if (nextSeqNum < base + windowSize) {
@@ -90,53 +107,45 @@ public class Sender2a1 {
                     if (base == nextSeqNum) {
                         System.out.println("send.");
                         timeoutDone = false;
-                        executor = Executors.newCachedThreadPool();
-                        futureCall = executor.submit(new AckTimeout());
-                        timeoutDone = futureCall.get();
-                        futureCall.cancel(true);
-                        executor.shutdown();
+                        futureCall = executor.submit(ackThread);
+                        // timeoutDone = futureCall.get();
+                        // System.out.println("Timeout");
+                        // futureCall.cancel(true);
+                        // System.out.println("Cancelled");
                     }
                     nextSeqNum += 1;
                 }
             }
-            while (!ackRecievedSomething && !timeoutDone) {
-                System.out.println(("Waiting for ack, timeout not done yet"));
-                byte[] ack = new byte[2];
-                DatagramPacket ackPacket = new DatagramPacket(ack, ack.length);
-                senderSocket.setSoTimeout(5);
-                try {
-                    senderSocket.receive(ackPacket);
-                    sequenceNumberACK = ((ack[0] & 0xff) << 8) + (ack[1] & 0xff);
-                    System.out.println("Received: Sequence number = " + sequenceNumberACK);
-                    ackPacketReceived = true;
-
-                } catch (SocketTimeoutException e) {
-                }
-
-                if (ackPacketReceived) {
-                    ackRecievedSomething = true;
-                    base = sequenceNumberACK + 1;
-                    if (base == nextSeqNum) {
-                        try {
-                            futureCall.cancel(true);
-                            executor.shutdown();
-                        } catch (Exception e) {
-                            System.out.println(("caught " + e));
-                        }
-
-                    } else {
-                        System.out.println("Restarting ACKTimeout Thread");
-                        executor = Executors.newCachedThreadPool();
-                        futureCall = executor.submit(new AckTimeout());
-                        timeoutDone = futureCall.get(); // Here the thread will be blocked
-                        break;
+            // System.out.println("here1");
+            timeoutDone = futureCall.get();
+            // System.out.println("here2");
+            sequenceNumberACK = futureAck.get();
+            // System.out.println("here3");
+            if (sequenceNumberACK>previousSequenceNumberACK) {
+                base = sequenceNumberACK+ 1;
+                System.out.println(("BASE MOVED TO : "+ base));
+                if (base == nextSeqNum) {
+                    // System.out.println("here4");
+                    try {
+                        timeoutDone = false;
+                        futureCall = executor.submit(ackThread);
+                    } catch (Exception e) {
+                        System.out.println(("caught " + e));
                     }
+                    // System.out.println("here5");
+
+                } else {
+                    System.out.println("Restarting ACKTimeout Thread");
+                    futureCall = executor.submit(ackThread);
+                    timeoutDone = futureCall.get(); // Here the thread will be blocked
                 }
             }
             if (timeoutDone) {
                 // done to re-send everything
                 System.out.println("Resending from " + base + " to " + (base + windowSize - 1));
                 nextSeqNum = base;
+                System.out.println(("NEXT SEQ NUM MOVED TO : "+ base));
+
                 // sequenceNumber = base - 1;
             }
         }
