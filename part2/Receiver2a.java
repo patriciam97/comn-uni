@@ -30,7 +30,7 @@ public class Receiver2a {
         FileOutputStream fileStream = new FileOutputStream(file);
 
         // sequence numbers and flag
-        int sequenceNumber = 0;
+        int sequenceNumber;
         // int previousSequenceNumber = 0;
         int expectedSequenceNum = 1;
         boolean flagLastMessage = false;
@@ -77,7 +77,7 @@ public class Receiver2a {
 
             } else {
                 // Resend the acknowledgement
-                sendAckPacket(expectedSequenceNum, receiverSocket, hostAddress, portNumber);
+                sendAckPacket(expectedSequenceNum-1, receiverSocket, hostAddress, portNumber);
                 flagLastMessage = false;
             }
             // if it was the last message to be received close file stream
