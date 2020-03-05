@@ -80,6 +80,7 @@ public class Receiver2a {
                 sendAckPacket(expectedSequenceNum-1, receiverSocket, hostAddress, portNumber);
                 flagLastMessage = false;
             }
+            sendAckPacket(expectedSequenceNum-1, receiverSocket, hostAddress, portNumber);
             // if it was the last message to be received close file stream
             if (flagLastMessage) {
                 fileStream.close();

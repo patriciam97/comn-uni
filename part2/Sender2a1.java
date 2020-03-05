@@ -10,7 +10,7 @@ class AckTimeout implements Callable<Boolean> {
     Integer retryTimeout;
     @Override
     public Boolean call() throws Exception {
-        System.out.println("Timeout thread started");
+        // System.out.println("Timeout thread started");
         Thread.sleep(this.retryTimeout);
         return new Boolean(true);
     }
@@ -19,7 +19,7 @@ class AckReceive implements Callable<Integer> {
     DatagramSocket senderSocket;
     @Override
     public Integer call() throws Exception {
-        System.out.println(("Waiting for ack, timeout not done yet"));
+        // System.out.println(("Waiting for ack, timeout not done yet"));
         byte[] ack = new byte[2];
         DatagramPacket ackPacket = new DatagramPacket(ack, ack.length);
         this.senderSocket.receive(ackPacket);
@@ -59,11 +59,9 @@ public class Sender2a1 {
         int nextSeqNum = 1;
         int finalPacketId = (int) Math.ceil((double) file.length() / 1024);
         boolean timeoutDone = false;
-        boolean ackRecievedSomething = false;
         // time needed to calculate avg throughput at the end
         Date date = new Date();
         long timeStartedSendingMS = date.getTime();
-        boolean ackLastFileReceived = false;
         ExecutorService executor = null;
         Future<Boolean> futureCall = null;
         Future<Integer> futureAck = null;
@@ -72,13 +70,12 @@ public class Sender2a1 {
         AckReceive ackReceive = new AckReceive();
         ackReceive.senderSocket = senderSocket;
         futureAck = executor.submit(ackReceive);
-
         AckTimeout ackThread = new AckTimeout();
         ackThread.retryTimeout = retryTimeout;
         
         // while loop is responsible to send packets
-        while (!ackLastFileReceived) {
-            System.out.println("Base: " + base + ", NextSeqNum: " + nextSeqNum + ", Window: " + windowSize);
+        while (true) {
+            // System.out.println("Base: " + base + ", NextSeqNum: " + nextSeqNum + ", Window: " + windowSize);
             if (nextSeqNum < base + windowSize) {
                 byte[] messageToSend = new byte[1027];
                 if ((nextSeqNum + 1024) >= fileByteArray.length) {
@@ -105,7 +102,6 @@ public class Sender2a1 {
                     System.out.println("Sent: Sequence number = " + nextSeqNum + "   Flag = " + flagLastMessage
                             + "   Length: " + messageToSend.length);
                     if (base == nextSeqNum) {
-                        System.out.println("send.");
                         timeoutDone = false;
                         futureCall = executor.submit(ackThread);
                         // timeoutDone = futureCall.get();
@@ -120,10 +116,14 @@ public class Sender2a1 {
             timeoutDone = futureCall.get();
             // System.out.println("here2");
             sequenceNumberACK = futureAck.get();
+            futureAck = executor.submit(ackReceive);
             // System.out.println("here3");
             if (sequenceNumberACK>previousSequenceNumberACK) {
+                if (finalPacketId == sequenceNumberACK){
+                    break;
+                }
                 base = sequenceNumberACK+ 1;
-                System.out.println(("BASE MOVED TO : "+ base));
+                // System.out.println(("BASE MOVED TO : "+ base));
                 if (base == nextSeqNum) {
                     // System.out.println("here4");
                     try {
@@ -135,7 +135,7 @@ public class Sender2a1 {
                     // System.out.println("here5");
 
                 } else {
-                    System.out.println("Restarting ACKTimeout Thread");
+                    // System.out.println("Restarting ACKTimeout Thread");
                     futureCall = executor.submit(ackThread);
                     timeoutDone = futureCall.get(); // Here the thread will be blocked
                 }
@@ -144,7 +144,7 @@ public class Sender2a1 {
                 // done to re-send everything
                 System.out.println("Resending from " + base + " to " + (base + windowSize - 1));
                 nextSeqNum = base;
-                System.out.println(("NEXT SEQ NUM MOVED TO : "+ base));
+                // System.out.println(("NEXT SEQ NUM MOVED TO : "+ base));
 
                 // sequenceNumber = base - 1;
             }
@@ -152,6 +152,12 @@ public class Sender2a1 {
         // at then end
         senderSocket.close();
         fileStream.close();
-
+        // Calculate the average throughput
+        int filesizeKB = (fileByteArray.length) / 1027;
+        date = new Date();
+        long timeDoneSendingMS = date.getTime();
+        double transferTime = (timeDoneSendingMS - timeStartedSendingMS)/ 1000;
+        double throughput = (double) filesizeKB / transferTime;
+        System.out.println(throughput);
     }
 }
