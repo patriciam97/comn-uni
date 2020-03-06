@@ -136,11 +136,8 @@ public class Sender2a1 {
                         // System.out.println("Timeout");
                         // futureCall.cancel(true);
                         // System.out.println("Cancelled");
-                        try{
-                            timeoutThread.start();
-                        }catch(Exception e){
-                            timeoutThread.run();
-                        }
+                        timeoutThread.start();
+
                     }
                     nextSeqNum += 1;
                 }
@@ -162,19 +159,12 @@ public class Sender2a1 {
                 // System.out.println(("BASE MOVED TO : "+ base));
                 if (base == nextSeqNum) {
                     // System.out.println("here4");
-                    try {
-                        timeoutDone = false;
-                        // futureCall = executor.submit(ackThread);
-                        timeoutThread.interrupt();
-                    } catch (Exception e) {
-                        System.out.println(("caught " + e));
-                    }
+                    timeoutThread = new Thread(timeoutRunnable);
                     // System.out.println("here5");
 
                 } else {
-                    timeoutThread.interrupt();
-                    System.out.println(timeoutThread.getState().toString());
-                    timeoutThread.run();
+                    timeoutThread = new Thread(timeoutRunnable);
+                    timeoutThread.start();
                     // timeoutThread.start();
                     // System.out.println("Restarting ACKTimeout Thread");
                     // futureCall = executor.submit(ackThread);
@@ -185,7 +175,7 @@ public class Sender2a1 {
                 // done to re-send everything
                 System.out.println("Resending from " + base + " to " + (base + windowSize - 1));
                 nextSeqNum = base;
-                timeoutThread.interrupt();
+                timeoutThread = new Thread(timeoutRunnable);
                 // System.out.println(("NEXT SEQ NUM MOVED TO : "+ base));
 
                 // sequenceNumber = base - 1;
