@@ -29,10 +29,9 @@ public class Receiver2a {
         File file = new File(fileName);
         FileOutputStream fileStream = new FileOutputStream(file);
 
-        // sequence numbers and flag
+        // sequence numbers for calculations
         int sequenceNumber;
-        // int previousSequenceNumber = 0;
-        int expectedSequenceNum = 1;
+        int expectedSequenceNum = 0;
         boolean flagLastMessage = false;
         boolean lastMessage = false;
         // for each incoming message
@@ -83,6 +82,9 @@ public class Receiver2a {
             sendAckPacket(expectedSequenceNum-1, receiverSocket, hostAddress, portNumber);
             // if it was the last message to be received close file stream
             if (flagLastMessage) {
+                for(int i=0;i<10;i++){
+                    sendAckPacket(expectedSequenceNum-1, receiverSocket, hostAddress, portNumber);
+                }
                 fileStream.close();
                 receiverSocket.close();
                 lastMessage = true;
@@ -94,6 +96,6 @@ public class Receiver2a {
         // confirmation message
         // System.out.println("\n=============================== C O M P L E T E D
         // ===============================");
-        // System.out.println("\n Received: "+fileName);
+        System.out.println("\n Received: "+fileName);
     }
 }

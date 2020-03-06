@@ -61,11 +61,10 @@ public class Sender2a1 {
         boolean flagLastMessage = false;
         // // sequence number to keep track the acknowledged packets
         Integer sequenceNumberACK = null;
-        Integer previousSequenceNumberACK = 0;
-        int base = 1;
-        int nextSeqNum = 1;
+        int base = 0;
+        int nextSeqNum = 0;
         int finalPacketId = (int) Math.ceil((double) file.length() / 1024);
-        boolean timeoutDone = false;
+        boolean lastPacketAck = false;
         // time needed to calculate avg throughput at the end
         Date date = new Date();
         long timeStartedSendingMS = date.getTime();
@@ -92,16 +91,18 @@ public class Sender2a1 {
             };
         Thread timeoutThread = new Thread(timeoutRunnable);
         // while loop is responsible to send packets
-        while (true) {
+        while (!lastPacketAck) {
+            // System.out.println("here2");
             // System.out.println("Base: " + base + ", NextSeqNum: " + nextSeqNum + ", Window: " + windowSize);
             if (nextSeqNum < base + windowSize) {
                 byte[] messageToSend = new byte[1027];
-                for (int i = base; i < base + windowSize; i++) {
-                    if (i>=finalPacketId){
-                        break;
-                    }
+                int max = base + windowSize;
+                if(((base+windowSize)*1024)>fileByteArray.length){
+                    max = finalPacketId;
+                }
+                for (int i = base; i < max; i++) {
+                    
                     if ((i*1024)+1024 >= fileByteArray.length) {
-                        System.out.println("here "+i+" "+(fileByteArray.length - (i*1024)+3));
                         messageToSend = new byte[fileByteArray.length -(i*1024)+3];
                         flagLastMessage = true;
                     }else{
@@ -112,8 +113,6 @@ public class Sender2a1 {
                     // flagLastMessage = ((nextSeqNum*1024) + 1024) >= fileByteArray.length;
                     
                     if (flagLastMessage) {
-                        System.out.println(messageToSend.length);
-
                         messageToSend[2] = (byte) 1;
                         for (int j = 0; j < (fileByteArray.length - (i*1024)); j++) {
                             messageToSend[j + 3] = fileByteArray[i + j];
@@ -130,57 +129,55 @@ public class Sender2a1 {
                     // System.out.println("Sent: Sequence number = " + nextSeqNum + "   Flag = " + flagLastMessage
                             // + "   Length: " + messageToSend.length);
                     if (base == nextSeqNum) {
-                        timeoutDone = false;
-                        // futureCall = executor.submit(ackThread);
-                        // timeoutDone = futureCall.get();
-                        // System.out.println("Timeout");
-                        // futureCall.cancel(true);
-                        // System.out.println("Cancelled");
-                        timeoutThread.start();
-
+                        try{
+                            timeoutThread.start();
+                        }catch(Exception e){
+                            timeoutThread.run();
+                        }
                     }
                     nextSeqNum += 1;
                 }
-                // if (nextSeqNum>finalPacketId){
-                //     break;
-                // }
             }
-            // System.out.println("here1");
-            // timeoutDone = futureCall.get();
-            // System.out.println("here2");
-            sequenceNumberACK = futureAck.get();
-            futureAck = executor.submit(ackReceive);
-            // System.out.println("here3");
-            if (sequenceNumberACK>previousSequenceNumberACK) {
+            if (futureAck.isDone()) {
+                sequenceNumberACK = futureAck.get();
+                futureAck = executor.submit(ackReceive);
+                System.out.println(sequenceNumberACK+" "+finalPacketId);
                 if (finalPacketId == sequenceNumberACK){
                     break;
                 }
                 base = sequenceNumberACK+ 1;
-                // System.out.println(("BASE MOVED TO : "+ base));
                 if (base == nextSeqNum) {
-                    // System.out.println("here4");
-                    timeoutThread = new Thread(timeoutRunnable);
-                    // System.out.println("here5");
+                    try {
 
+                        timeoutThread.interrupt();
+                    } catch (Exception e) {
+                        System.out.println(("caught " + e));
+                    }
                 } else {
-                    timeoutThread = new Thread(timeoutRunnable);
-                    timeoutThread.start();
-                    // timeoutThread.start();
-                    // System.out.println("Restarting ACKTimeout Thread");
-                    // futureCall = executor.submit(ackThread);
-                    // timeoutDone = futureCall.get(); // Here the thread will be blocked
+                    timeoutThread.interrupt();
+                    timeoutThread.run();
+                }
+                if(sequenceNumberACK == finalPacketId-1){
+                    System.out.println("here3");
+                    lastPacketAck = true;
+                    break;
                 }
             }
             if (!timeoutThread.isAlive()) {
                 // done to re-send everything
-                System.out.println("Resending from " + base + " to " + (base + windowSize - 1));
+                int max = base + windowSize;
+                if(((base+windowSize)*1024)>fileByteArray.length){
+                    max = finalPacketId;
+                }
+                // System.out.println("Resending from " + base + " to " + max);
                 nextSeqNum = base;
-                timeoutThread = new Thread(timeoutRunnable);
-                // System.out.println(("NEXT SEQ NUM MOVED TO : "+ base));
-
-                // sequenceNumber = base - 1;
+                // timeoutThread.interrupt();
             }
         }
+        // System.out.println("here");
+        timeoutThread.interrupt();
+        futureAck.cancel(true);
+        executor.shutdown();
         // at then end
         senderSocket.close();
         fileStream.close();
