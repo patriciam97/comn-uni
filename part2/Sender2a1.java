@@ -15,6 +15,13 @@ class AckTimeout implements Callable<Boolean> {
         return new Boolean(true);
     }
 }
+// class AckTimeoutR implements Runnable {
+//   Integer retryTimeout;
+//   public void run(){
+//     Thread.sleep(this.retryTimeout);
+//   }
+// }
+
 class AckReceive implements Callable<Integer> {
     DatagramSocket senderSocket;
     @Override
@@ -40,7 +47,7 @@ public class Sender2a1 {
         sendFile(hostName, portNumber, fileName, retryTimeout, windowSize);
     }
 
-    public static void sendFile(String hostName, int portNumber, String fileName, int retryTimeout, int windowSize)
+    public static void sendFile(String hostName, int portNumber, String fileName, final int retryTimeout, int windowSize)
             throws IOException, Exception {
         DatagramSocket senderSocket = new DatagramSocket();
         InetAddress ipAddress = InetAddress.getByName(hostName);
@@ -70,24 +77,45 @@ public class Sender2a1 {
         AckReceive ackReceive = new AckReceive();
         ackReceive.senderSocket = senderSocket;
         futureAck = executor.submit(ackReceive);
-        AckTimeout ackThread = new AckTimeout();
-        ackThread.retryTimeout = retryTimeout;
-        
+        // AckTimeout ackThread = new AckTimeout();
+        // ackThread.retryTimeout = retryTimeout;
+        Runnable timeoutRunnable =
+            new Runnable(){
+              // final retryTimeout = retryTimeout;
+                public void run(){
+                  try{
+                    Thread.sleep(retryTimeout);
+                  }catch(Exception e){
+
+                  }
+                }
+            };
+        Thread timeoutThread = new Thread(timeoutRunnable);
         // while loop is responsible to send packets
         while (true) {
             // System.out.println("Base: " + base + ", NextSeqNum: " + nextSeqNum + ", Window: " + windowSize);
             if (nextSeqNum < base + windowSize) {
                 byte[] messageToSend = new byte[1027];
-                if ((nextSeqNum + 1024) >= fileByteArray.length) {
-                    messageToSend = new byte[fileByteArray.length - nextSeqNum];
-                }
                 for (int i = base; i < base + windowSize; i++) {
+                    if (i>=finalPacketId){
+                        break;
+                    }
+                    if ((i*1024)+1024 >= fileByteArray.length) {
+                        System.out.println("here "+i+" "+(fileByteArray.length - (i*1024)+3));
+                        messageToSend = new byte[fileByteArray.length -(i*1024)+3];
+                        flagLastMessage = true;
+                    }else{
+                        flagLastMessage = false;
+                    }
                     messageToSend[0] = (byte) (nextSeqNum >> 8);
                     messageToSend[1] = (byte) (nextSeqNum);
-                    flagLastMessage = (nextSeqNum + 1024) >= fileByteArray.length;
+                    // flagLastMessage = ((nextSeqNum*1024) + 1024) >= fileByteArray.length;
+                    
                     if (flagLastMessage) {
+                        System.out.println(messageToSend.length);
+
                         messageToSend[2] = (byte) 1;
-                        for (int j = 0; j < (fileByteArray.length - i); j++) {
+                        for (int j = 0; j < (fileByteArray.length - (i*1024)); j++) {
                             messageToSend[j + 3] = fileByteArray[i + j];
                         }
                     } else {
@@ -99,21 +127,29 @@ public class Sender2a1 {
                     DatagramPacket packetToSend = new DatagramPacket(messageToSend, messageToSend.length, ipAddress,
                             portNumber);
                     senderSocket.send(packetToSend);
-                    System.out.println("Sent: Sequence number = " + nextSeqNum + "   Flag = " + flagLastMessage
-                            + "   Length: " + messageToSend.length);
+                    // System.out.println("Sent: Sequence number = " + nextSeqNum + "   Flag = " + flagLastMessage
+                            // + "   Length: " + messageToSend.length);
                     if (base == nextSeqNum) {
                         timeoutDone = false;
-                        futureCall = executor.submit(ackThread);
+                        // futureCall = executor.submit(ackThread);
                         // timeoutDone = futureCall.get();
                         // System.out.println("Timeout");
                         // futureCall.cancel(true);
                         // System.out.println("Cancelled");
+                        try{
+                            timeoutThread.start();
+                        }catch(Exception e){
+                            timeoutThread.run();
+                        }
                     }
                     nextSeqNum += 1;
                 }
+                // if (nextSeqNum>finalPacketId){
+                //     break;
+                // }
             }
             // System.out.println("here1");
-            timeoutDone = futureCall.get();
+            // timeoutDone = futureCall.get();
             // System.out.println("here2");
             sequenceNumberACK = futureAck.get();
             futureAck = executor.submit(ackReceive);
@@ -128,22 +164,28 @@ public class Sender2a1 {
                     // System.out.println("here4");
                     try {
                         timeoutDone = false;
-                        futureCall = executor.submit(ackThread);
+                        // futureCall = executor.submit(ackThread);
+                        timeoutThread.interrupt();
                     } catch (Exception e) {
                         System.out.println(("caught " + e));
                     }
                     // System.out.println("here5");
 
                 } else {
+                    timeoutThread.interrupt();
+                    System.out.println(timeoutThread.getState().toString());
+                    timeoutThread.run();
+                    // timeoutThread.start();
                     // System.out.println("Restarting ACKTimeout Thread");
-                    futureCall = executor.submit(ackThread);
-                    timeoutDone = futureCall.get(); // Here the thread will be blocked
+                    // futureCall = executor.submit(ackThread);
+                    // timeoutDone = futureCall.get(); // Here the thread will be blocked
                 }
             }
-            if (timeoutDone) {
+            if (!timeoutThread.isAlive()) {
                 // done to re-send everything
                 System.out.println("Resending from " + base + " to " + (base + windowSize - 1));
                 nextSeqNum = base;
+                timeoutThread.interrupt();
                 // System.out.println(("NEXT SEQ NUM MOVED TO : "+ base));
 
                 // sequenceNumber = base - 1;

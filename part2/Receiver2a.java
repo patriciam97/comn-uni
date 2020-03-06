@@ -40,7 +40,7 @@ public class Receiver2a {
             byte[] buffer = new byte[1027];
             // Receive packet and retrieve message
             DatagramPacket receivedPacket = new DatagramPacket(buffer, buffer.length);
-            receiverSocket.setSoTimeout(0);
+            // receiverSocket.setSoTimeout(0);
             receiverSocket.receive(receivedPacket);
 
             // retrieve portNumber and hostAddress for sending ack back
