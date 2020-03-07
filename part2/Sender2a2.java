@@ -23,8 +23,8 @@ public class Sender2a2 {
     public static void sendFile(String hostName, int portNumber, String fileName, final int retryTimeout,
             int windowSize) throws IOException, Exception {
         // socket is used to receive acks and set timeout error
-        DatagramSocket senderSocket = new DatagramSocket();
-        InetAddress ipAddress = InetAddress.getByName(hostName);
+        // DatagramSocket senderSocket = new DatagramSocket();
+        // InetAddress ipAddress = InetAddress.getByName(hostName);
         // channel is used to send packets
         DatagramChannel channel = DatagramChannel.open();
         channel.socket().bind(new InetSocketAddress(hostName, portNumber));
@@ -38,6 +38,7 @@ public class Sender2a2 {
         boolean flagLastMessage = false;
         // // sequence number to keep track the acknowledged packets
         Integer sequenceNumberACK = null;
+        Integer previousSeqNumAck = -1;
         int base = 0;
         int nextSeqNum = 0;
         int finalPacketId = (int) Math.ceil((double) file.length() / 1024);
@@ -45,7 +46,17 @@ public class Sender2a2 {
         // time needed to calculate avg throughput at the end
         Date date = new Date();
         long timeStartedSendingMS = date.getTime();
+        Runnable timeoutRunnable = new Runnable() {
+            // final retryTimeout = retryTimeout;
+            public void run() {
+                try {
+                    Thread.sleep(retryTimeout);
+                } catch (Exception e) {
 
+                }
+            }
+        };
+        Thread timeoutThread = new Thread(timeoutRunnable);
         while (!lastPacketAck) {
             // System.out.println("here2");
             // System.out.println("Base: " + base + ", NextSeqNum: " + nextSeqNum + ",
@@ -84,12 +95,11 @@ public class Sender2a2 {
                     // portNumber);
                     // senderSocket.send(packetToSend);
 
-                    // ByteBuffer buf = ByteBuffer.allocate(messageToSend.length);
-                    // buf.clear();
-                    // buf.put(messageToSend);
-                    // buf.flip();
-                    // int bytesSent = channel.send(buf, new InetSocketAddress(hostName,
-                    // portNumber));
+                    ByteBuffer buf = ByteBuffer.allocate(messageToSend.length);
+                    buf.clear();
+                    buf.put(messageToSend);
+                    buf.flip();
+                    channel.send(buf, new InetSocketAddress(hostName, portNumber));
 
                     // System.out.println("Sent: Sequence number = " + nextSeqNum + " Flag = " +
                     // flagLastMessage
@@ -104,9 +114,13 @@ public class Sender2a2 {
                     nextSeqNum += 1;
                 }
             }
-            if (futureAck.isDone()) {
-                sequenceNumberACK = futureAck.get();
-                futureAck = executor.submit(ackReceive);
+            ByteBuffer buf = ByteBuffer.allocate(2);
+            buf.clear();
+            channel.receive(buf);
+
+            if ((((buf.get(0) & 0xff) << 8) + (buf.get(1) & 0xff)) < previousSeqNumAck) {
+                sequenceNumberACK = ((buf.get(0) & 0xff) << 8) + (buf.get(1) & 0xff);
+                previousSeqNumAck = sequenceNumberACK;
                 System.out.println(sequenceNumberACK + " " + finalPacketId);
                 if (finalPacketId == sequenceNumberACK) {
                     break;
@@ -142,10 +156,11 @@ public class Sender2a2 {
         }
         // System.out.println("here");
         timeoutThread.interrupt();
-        futureAck.cancel(true);
-        executor.shutdown();
+        // futureAck.cancel(true);
+        // executor.shutdown();
         // at then end
-        senderSocket.close();
+        // senderSocket.close();
+        channel.close();
         fileStream.close();
         // Calculate the average throughput
         int filesizeKB = (fileByteArray.length) / 1027;
