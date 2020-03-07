@@ -8,15 +8,23 @@ import java.util.concurrent.Future;
 
 class AckReceive implements Callable<Integer> {
     DatagramSocket senderSocket;
+    int timeout;
 
     @Override
     public Integer call() throws Exception {
         // System.out.println(("Waiting for ack, timeout not done yet"));
         byte[] ack = new byte[2];
         DatagramPacket ackPacket = new DatagramPacket(ack, ack.length);
-        this.senderSocket.receive(ackPacket);
-        Integer sequenceNumberACK = ((ack[0] & 0xff) << 8) + (ack[1] & 0xff);
-        return sequenceNumberACK;
+        try {
+
+            this.senderSocket.setSoTimeout(timeout);
+            this.senderSocket.receive(ackPacket);
+            Integer sequenceNumberACK = ((ack[0] & 0xff) << 8) + (ack[1] & 0xff);
+            return sequenceNumberACK;
+
+        } catch (SocketTimeoutException e) {
+            return null;
+        }
     }
 }
 
@@ -60,20 +68,21 @@ public class Sender2a1 {
         executor = Executors.newCachedThreadPool();
         AckReceive ackReceive = new AckReceive();
         ackReceive.senderSocket = senderSocket;
+        ackReceive.timeout = retryTimeout;
         futureAck = executor.submit(ackReceive);
         // AckTimeout ackThread = new AckTimeout();
         // ackThread.retryTimeout = retryTimeout;
-        Runnable timeoutRunnable = new Runnable() {
-            // final retryTimeout = retryTimeout;
-            public void run() {
-                try {
-                    Thread.sleep(retryTimeout);
-                } catch (Exception e) {
+        // Runnable timeoutRunnable = new Runnable() {
+        // // final retryTimeout = retryTimeout;
+        // public void run() {
+        // try {
+        // Thread.sleep(retryTimeout);
+        // } catch (Exception e) {
 
-                }
-            }
-        };
-        Thread timeoutThread = new Thread(timeoutRunnable);
+        // }
+        // }
+        // };
+        // Thread timeoutThread = new Thread(timeoutRunnable);
         // while loop is responsible to send packets
         while (!lastPacketAck) {
             // System.out.println("here2");
@@ -115,14 +124,15 @@ public class Sender2a1 {
                     // flagLastMessage
                     // + " Length: " + messageToSend.length);
                     if (base == nextSeqNum) {
-                        senderSocket.setSoTimeout(retryTimeout);
+                        futureAck = executor.submit(ackReceive);
                     }
                     nextSeqNum += 1;
                 }
             }
-            try {
-                if (futureAck.isDone()) {
-                    sequenceNumberACK = futureAck.get();
+            if (futureAck.isDone()) {
+                Integer result = futureAck.get();
+                if (result != null) {
+                    sequenceNumberACK = result;
                     futureAck = executor.submit(ackReceive);
                     System.out.println(sequenceNumberACK + " " + finalPacketId);
                     if (finalPacketId == sequenceNumberACK) {
@@ -130,34 +140,33 @@ public class Sender2a1 {
                     }
                     base = sequenceNumberACK + 1;
                     if (base == nextSeqNum) {
-                        senderSocket.setSoTimeout(0); // stopping the timeout
-
+                        futureAck.cancel(true);
                     } else {
-                        senderSocket.setSoTimeout(retryTimeout);
-
+                        futureAck = executor.submit(ackReceive);
                     }
                     if (sequenceNumberACK == finalPacketId - 1) {
                         System.out.println("here3");
                         lastPacketAck = true;
                         break;
                     }
+                } else {
+                    int max = base + windowSize;
+                    if (((base + windowSize) * 1024) > fileByteArray.length) {
+                        max = finalPacketId;
+                    }
+                    System.out.println("Resending from " + base + " to " + max);
+                    nextSeqNum = base;
                 }
-            } catch (SocketTimeoutException e) {
-                int max = base + windowSize;
-                if (((base + windowSize) * 1024) > fileByteArray.length) {
-                    max = finalPacketId;
-                }
-                // System.out.println("Resending from " + base + " to " + max);
-                nextSeqNum = base;
             }
         }
         // System.out.println("here");
-        timeoutThread.interrupt();
+        // timeoutThread.interrupt();
         futureAck.cancel(true);
         executor.shutdown();
         // at then end
         senderSocket.close();
         fileStream.close();
+
         // Calculate the average throughput
         int filesizeKB = (fileByteArray.length) / 1027;
         date = new Date();
