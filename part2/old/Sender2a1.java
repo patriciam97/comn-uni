@@ -28,7 +28,7 @@ class AckReceive implements Callable<Integer> {
     }
 }
 
-public class Sender2a {
+public class Sender2a1 {
 
     public static void main(String args[]) throws Exception {
 
@@ -97,11 +97,46 @@ public class Sender2a {
                 DatagramPacket packetToSend = new DatagramPacket(messageToSend, messageToSend.length, ipAddress,
                 portNumber);
                 senderSocket.send(packetToSend);
-                // System.out.println("Sent: Sequence number = " + nextSeqNum + " Flag = " +flagLastMessage+ " Length: " + messageToSend.length);
+                System.out.println("Sent: Sequence number = " + nextSeqNum + " Flag = " +flagLastMessage+ " Length: " + messageToSend.length);
                 if (base == nextSeqNum) {
                     futureAck = executor.submit(ackReceive);
                 }
                 nextSeqNum += 1;
+                // int max = base + windowSize;
+                // if ((base + windowSize) > finalPacketId) {
+                //     System.out.println("here max is "+ finalPacketId);
+                //     max = finalPacketId;
+                // }
+                // for (int i = base; i < max; i++) {
+                //     if ((i * 1024) + 1024 >= fileByteArray.length) {
+                //         messageToSend = new byte[fileByteArray.length - (i * 1024) + 3];
+                //         flagLastMessage = true;
+                //     } else {
+                //         flagLastMessage = false;
+                //     }
+                //     messageToSend[0] = (byte) (i >> 8);
+                //     messageToSend[1] = (byte) (i);
+
+                //     if (flagLastMessage) {
+                //         messageToSend[2] = (byte) 1;
+                //         for (int j = 0; j < (fileByteArray.length - (i * 1024)); j++) {
+                //             messageToSend[j + 3] = fileByteArray[i + j];
+                //         }
+                //     } else {
+                //         messageToSend[2] = (byte) 0;
+                //         for (int j = 0; j <= 1023; j++) {
+                //             messageToSend[j + 3] = fileByteArray[i + j];
+                //         }
+                //     }
+                //     DatagramPacket packetToSend = new DatagramPacket(messageToSend, messageToSend.length, ipAddress,
+                //             portNumber);
+                //     senderSocket.send(packetToSend);
+                //     System.out.println("Sent: Sequence number = " + i + " Flag = " +flagLastMessage+ " Length: " + messageToSend.length);
+                //     if (base == nextSeqNum) {
+                //         futureAck = executor.submit(ackReceive);
+                //     }
+                //     nextSeqNum += 1;
+                // }
             }
             if (futureAck.isDone() && !lastPacketAck) {
                 Integer result = futureAck.get();
@@ -127,7 +162,7 @@ public class Sender2a {
                     futureAck = executor.submit(ackReceive);
                     int max = base + windowSize;
                     if ((base + windowSize) > finalPacketId) {
-                        // System.out.println("here max is "+ finalPacketId);
+                        System.out.println("here max is "+ finalPacketId);
                         max = finalPacketId;
                     }
                     byte[] messageToSend = new byte[1027];
@@ -155,8 +190,14 @@ public class Sender2a {
                         DatagramPacket packetToSend = new DatagramPacket(messageToSend, messageToSend.length, ipAddress,
                                 portNumber);
                         senderSocket.send(packetToSend);
-                        // System.out.println("Re-Sent: Sequence number = " + i + " Flag = " +flagLastMessage+ " Length: " + messageToSend.length);
+                        System.out.println("Re-Sent: Sequence number = " + i + " Flag = " +flagLastMessage+ " Length: " + messageToSend.length);
                     }
+                    // int max = base + windowSize;
+                    // if (((base + windowSize) * 1024) > fileByteArray.length) {
+                    //     max = finalPacketId;
+                    // }
+                    // System.out.println("Resending from " + base + " to " + max);
+                    // nextSeqNum = base;
                 }
             }
         }

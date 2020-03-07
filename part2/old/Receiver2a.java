@@ -20,7 +20,7 @@ public class Receiver2a {
         DatagramPacket acknowledgement = new DatagramPacket(ackPacketToSend, ackPacketToSend.length, hostAddress,
                 portNumber);
         receiverSocket.send(acknowledgement);
-        // System.out.println("SENT: ACK: " + previousSequenceNumber);
+        System.out.println("SENT: ACK: " + previousSequenceNumber);
     }
 
     public static void receiveFile(int port, String fileName) throws Exception {
@@ -52,14 +52,14 @@ public class Receiver2a {
             int sequenceNumberA = (messageReceived[0] & 0xff) << 8;
             int sequenceNumberB = (messageReceived[1] & 0xff);
             sequenceNumber = sequenceNumberA + sequenceNumberB;
-            // System.out.println("RECEIVED: " + sequenceNumber);
+            System.out.println("RECEIVED: " + sequenceNumber);
             if ((expectedSequenceNum) == sequenceNumber) {
-                // System.out.println("EXPECTED SEQ NUM RECEIVED : " + expectedSequenceNum);
+                System.out.println("EXPECTED SEQ NUM RECEIVED : " + expectedSequenceNum);
 
                 // check header to see if it's the last message
                 if ((messageReceived[2] & 0xff) == 1) {
                     flagLastMessage = true;
-                    // System.out.println("FLAG " + flagLastMessage);
+                    System.out.println("FLAG " + flagLastMessage);
                 } else {
                     flagLastMessage = false;
                 }
@@ -70,7 +70,7 @@ public class Receiver2a {
                 }
                 // save data into a new file with name as fileName
                 fileStream.write(dataReceived);
-                // System.out.println("SAVED SEQ NUM : " + expectedSequenceNum);
+                System.out.println("SAVED SEQ NUM : " + expectedSequenceNum);
 
                 // Send acknowledgement
                 sendAckPacket(expectedSequenceNum, receiverSocket, hostAddress, portNumber);
@@ -99,6 +99,6 @@ public class Receiver2a {
         // confirmation message
         // System.out.println("\n=============================== C O M P L E T E D
         // ===============================");
-        System.out.println("Received: "+fileName);
+        System.out.println("\nReceived: "+fileName);
     }
 }
