@@ -7,12 +7,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 class AckReceive implements Callable<Integer> {
+    
     DatagramSocket senderSocket;
     int timeout;
 
     @Override
     public Integer call() throws Exception {
-        // System.out.println(("Waiting for ack, timeout not done yet"));
         byte[] ack = new byte[2];
         DatagramPacket ackPacket = new DatagramPacket(ack, ack.length);
         try {
@@ -41,7 +41,8 @@ public class Sender2a1 {
     }
 
     public static void sendFile(String hostName, int portNumber, String fileName, final int retryTimeout,
-            int windowSize) throws IOException, Exception {
+        
+        int windowSize) throws IOException, Exception {
         DatagramSocket senderSocket = new DatagramSocket();
         InetAddress ipAddress = InetAddress.getByName(hostName);
         File file = new File(fileName);
@@ -49,7 +50,6 @@ public class Sender2a1 {
         byte[] fileByteArray = new byte[(int) file.length()];
         fileStream.read(fileByteArray);
         fileStream.close();
-
         // int sequenceNumber = 0;
         boolean flagLastMessage = false;
         // // sequence number to keep track the acknowledged packets
@@ -70,20 +70,7 @@ public class Sender2a1 {
         ackReceive.senderSocket = senderSocket;
         ackReceive.timeout = retryTimeout;
         futureAck = executor.submit(ackReceive);
-        // AckTimeout ackThread = new AckTimeout();
-        // ackThread.retryTimeout = retryTimeout;
-        // Runnable timeoutRunnable = new Runnable() {
-        // // final retryTimeout = retryTimeout;
-        // public void run() {
-        // try {
-        // Thread.sleep(retryTimeout);
-        // } catch (Exception e) {
 
-        // }
-        // }
-        // };
-        // Thread timeoutThread = new Thread(timeoutRunnable);
-        // while loop is responsible to send packets
         while (!lastPacketAck) {
             // System.out.println("here2");
             // System.out.println("Base: " + base + ", NextSeqNum: " + nextSeqNum + ",
@@ -104,7 +91,6 @@ public class Sender2a1 {
                     }
                     messageToSend[0] = (byte) (nextSeqNum >> 8);
                     messageToSend[1] = (byte) (nextSeqNum);
-                    // flagLastMessage = ((nextSeqNum*1024) + 1024) >= fileByteArray.length;
 
                     if (flagLastMessage) {
                         messageToSend[2] = (byte) 1;
@@ -129,13 +115,13 @@ public class Sender2a1 {
                     nextSeqNum += 1;
                 }
             }
-            if (futureAck.isDone()) {
+            if (futureAck.isDone() && !lastPacketAck) {
                 Integer result = futureAck.get();
                 if (result != null) {
                     sequenceNumberACK = result;
                     futureAck = executor.submit(ackReceive);
-                    System.out.println(sequenceNumberACK + " " + finalPacketId);
                     if (finalPacketId == sequenceNumberACK) {
+                        lastPacketAck = true;
                         break;
                     }
                     base = sequenceNumberACK + 1;
@@ -145,7 +131,7 @@ public class Sender2a1 {
                         futureAck = executor.submit(ackReceive);
                     }
                     if (sequenceNumberACK == finalPacketId - 1) {
-                        System.out.println("here3");
+                        futureAck.cancel(true);
                         lastPacketAck = true;
                         break;
                     }
@@ -159,11 +145,7 @@ public class Sender2a1 {
                 }
             }
         }
-        // System.out.println("here");
-        // timeoutThread.interrupt();
-        futureAck.cancel(true);
         executor.shutdown();
-        // at then end
         senderSocket.close();
         fileStream.close();
 
