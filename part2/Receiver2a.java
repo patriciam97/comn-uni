@@ -28,7 +28,6 @@ public class Receiver2a {
         DatagramSocket receiverSocket = new DatagramSocket(port);
         File file = new File(fileName);
         FileOutputStream fileStream = new FileOutputStream(file);
-
         // sequence numbers for calculations
         int sequenceNumber;
         int expectedSequenceNum = 0;
@@ -56,23 +55,27 @@ public class Receiver2a {
             System.out.println("RECEIVED: " + sequenceNumber);
             if ((expectedSequenceNum) == sequenceNumber) {
                 System.out.println("EXPECTED SEQ NUM RECEIVED : " + expectedSequenceNum);
+
                 // check header to see if it's the last message
                 if ((messageReceived[2] & 0xff) == 1) {
                     flagLastMessage = true;
+                    System.out.println("FLAG " + flagLastMessage);
                 } else {
                     flagLastMessage = false;
                 }
-                // get data from message received
 
+                // get data from message received
                 for (int i = 0; i < dataReceived.length; i++) {
                     dataReceived[i] = messageReceived[i + 3];
                 }
-
                 // save data into a new file with name as fileName
                 fileStream.write(dataReceived);
+                System.out.println("SAVED SEQ NUM : " + expectedSequenceNum);
+
                 // Send acknowledgement
                 sendAckPacket(expectedSequenceNum, receiverSocket, hostAddress, portNumber);
                 expectedSequenceNum += 1;
+
 
             } else {
                 // Resend the acknowledgement
@@ -96,6 +99,6 @@ public class Receiver2a {
         // confirmation message
         // System.out.println("\n=============================== C O M P L E T E D
         // ===============================");
-        System.out.println("\n Received: "+fileName);
+        System.out.println("\nReceived: "+fileName);
     }
 }
