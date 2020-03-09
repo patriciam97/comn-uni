@@ -10,47 +10,50 @@ import java.util.concurrent.atomic.AtomicBoolean;
 class AckReceive implements Callable<Integer> {
 
     DatagramSocket senderSocket;
+
     @Override
     public Integer call() throws Exception {
-            byte[] ack = new byte[2];
-            DatagramPacket ackPacket = new DatagramPacket(ack, ack.length);
-            this.senderSocket.receive(ackPacket);
-            Integer sequenceNumberACK = ((ack[0] & 0xff) << 8) + (ack[1] & 0xff);
-            return sequenceNumberACK;
+        byte[] ack = new byte[2];
+        DatagramPacket ackPacket = new DatagramPacket(ack, ack.length);
+        this.senderSocket.receive(ackPacket);
+        Integer sequenceNumberACK = ((ack[0] & 0xff) << 8) + (ack[1] & 0xff);
+        return sequenceNumberACK;
     }
 }
 
-class PacketSendThread implements Runnable { 
-    // to stop the thread 
-    private boolean exit; 
-    private Integer sequenceNumber; 
-    private DatagramSocket senderSocket; 
-    private int timeout; 
-    private DatagramPacket packet; 
-    Thread t; 
+class PacketSendThread implements Runnable {
+    // to stop the thread
+    private boolean exit;
+    private Integer sequenceNumber;
+    private DatagramSocket senderSocket;
+    private int timeout;
+    private DatagramPacket packet;
+    Thread t;
 
-    PacketSendThread(final Integer sequenceNumber, final DatagramSocket senderSocket,
-    int timeout, DatagramPacket packet) 
-    { 
-        this.sequenceNumber = sequenceNumber; 
+    PacketSendThread(final Integer sequenceNumber, final DatagramSocket senderSocket, int timeout,
+            DatagramPacket packet) {
+        this.sequenceNumber = sequenceNumber;
         this.senderSocket = senderSocket;
         this.timeout = timeout;
         this.packet = packet;
-        t = new Thread(this, Integer.toString(sequenceNumber)); 
-        System.out.println("New thread: " + t); 
-        exit = false; 
-        t.start(); // Starting the thread 
-    } 
-    public void run() 
-    { 
-        int i = 0; 
-        while (!exit) { 
+        t = new Thread(this, Integer.toString(sequenceNumber));
+        System.out.println("New thread: " + t);
+        exit = false;
+        t.start(); // Starting the thread
+    }
+
+    public void run() {
+        int i = 0;
+        while (!exit) {
             try {
                 this.senderSocket.send(this.packet);
-                System.out.println("Sent: Sequence number = " + this.sequenceNumber);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            System.out.println("Sent: Sequence number = " + this.sequenceNumber);
+            try {
                 Thread.sleep(this.timeout);
-
-            } catch (IOException | InterruptedException e) {
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         } 
@@ -102,7 +105,8 @@ public class Sender2b {
         AckReceive ackReceive = new AckReceive();
         ackReceive.senderSocket = senderSocket;
         futureAck = executor.submit(ackReceive);
-        HashMap<Integer, DatagramPacket> packetsSentBuffer = new HashMap<Integer, DatagramPacket>();
+        // HashMap<Integer, DatagramPacket> packetsSentBuffer = new HashMap<Integer, DatagramPacket>();
+        ArrayList<Integer> unackPackets = new ArrayList<Integer>();
         HashMap<Integer, PacketSendThread> threads = new HashMap<Integer, PacketSendThread>();
 
         while (!lastPacketAck) {
@@ -134,8 +138,7 @@ public class Sender2b {
                         portNumber);
                 PacketSendThread threadToRun = new PacketSendThread(nextSeqNum, senderSocket, retryTimeout, packetToSend);
                 threads.put(nextSeqNum,threadToRun);
-
-                packetsSentBuffer.put(nextSeqNum, packetToSend);
+                unackPackets.add(nextSeqNum);
                 nextSeqNum += 1;
             }
             if (futureAck.isDone() && !lastPacketAck) {
@@ -144,52 +147,18 @@ public class Sender2b {
                 futureAck = executor.submit(ackReceive);
                 PacketSendThread threadToStop = threads.get(sequenceNumberACK);
                 threadToStop.stop();
-                    // if (base == nextSeqNum) {
-                    //     futureAck.cancel(true);
-                    // } else {
-                    //     futureAck = executor.submit(ackReceive);
-                    // }
+                unackPackets.remove(sequenceNumberACK);
+                if (unackPackets.size()>0){
+                    base = Collections.min(unackPackets)+1;
+                } else{
+                    base = nextSeqNum;
+                }
                 if (sequenceNumberACK == finalPacketId - 1) {
                     futureAck.cancel(true);
                     lastPacketAck = true;
                     break;
                 }
-            } else {
-                    futureAck = executor.submit(ackReceive);
-                    int max = base + windowSize;
-                    if ((base + windowSize) > finalPacketId) {
-                        // System.out.println("here max is "+ finalPacketId);
-                        max = finalPacketId;
-                    }
-                    byte[] messageToSend = new byte[1027];
-                    for (int i = base; i < max; i++) {
-                        if ((i * 1024) + 1024 >= fileByteArray.length) {
-                            messageToSend = new byte[fileByteArray.length - (i * 1024) + 3];
-                            flagLastMessage = true;
-                        } else {
-                            flagLastMessage = false;
-                        }
-                        messageToSend[0] = (byte) (i >> 8);
-                        messageToSend[1] = (byte) (i);
-
-                        if (flagLastMessage) {
-                            messageToSend[2] = (byte) 1;
-                            for (int j = 0; j < (fileByteArray.length - (i * 1024)); j++) {
-                                messageToSend[j + 3] = fileByteArray[(i*1024) + j];
-                            }
-                        } else {
-                            messageToSend[2] = (byte) 0;
-                            for (int j = 0; j <= 1023; j++) {
-                                messageToSend[j + 3] = fileByteArray[(i*1024) + j];
-                            }
-                        }
-                        DatagramPacket packetToSend = new DatagramPacket(messageToSend, messageToSend.length, ipAddress,
-                                portNumber);
-                        senderSocket.send(packetToSend);
-                        System.out.println("Re-Sent: Sequence number = " + i + " Flag = " +flagLastMessage+ " Length: " + messageToSend.length);
-                    }
-                }
-            }
+            } 
         }
         executor.shutdown();
         senderSocket.close();
