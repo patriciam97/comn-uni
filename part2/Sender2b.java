@@ -32,6 +32,7 @@ public class Sender2b {
                         if (timerTasks.containsKey(sequenceNumberACK)) {
                             timerTasks.get(sequenceNumberACK).cancel();
                         }
+                        base = sequenceNumberACK;
                     }
                 }
 
@@ -52,7 +53,8 @@ public class Sender2b {
         public void run() {
             // send window packets, timer will start automatically
             try {
-                senderSocket.send(packet);
+                senderSocket.send(this.packet);
+                System.out.println("Re-sent: "+this.sequenceNumber);
             } catch (IOException e) {
                 System.err.println(e);
             }
@@ -131,9 +133,10 @@ public class Sender2b {
                     senderSocket.send(packetToSend);
                     TimerTask task = new resendPacketTask(nextSeqNum, packetToSend);
                     timerTasks.put(nextSeqNum, task);
-                    // System.out.println("Sent: Sequence number = " + nextSeqNum + " Flag = " +
-                    // flagLastMessage
-                    // + " Length: " + messageToSend.length);
+                    timer.schedule(task,0,retryTimeout);
+                    System.out.println("Sent: Sequence number = " + nextSeqNum + " Flag = " +
+                    flagLastMessage
+                    + " Length: " + messageToSend.length);
                     // if (base == nextSeqNum) {
                     // timer.schedule(new resendWindowTask(), retryTimeout);
                     // }
