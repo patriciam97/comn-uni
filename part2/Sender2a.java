@@ -43,10 +43,13 @@ public class Sender2a {
         @Override
         public void run() {
             // send window packets, timer will start automatically
-            System.out.println(base);
-            // for (int i = 0; i < windowPackets.size(); i++) {
-            // senderSocket.send(windowPackets.get(i));
-            // }
+            synchronized (Sender2a.class) {
+                while (!windowPackets.isEmpty()) {
+                    DatagramPacket packet = windowPackets.remove();
+                    senderSocket.send(packet);
+                    windowPackets.add(packet);
+                }
+            }
         }
     }
 
@@ -55,7 +58,7 @@ public class Sender2a {
     static int finalPacketId = 0;
     static DatagramSocket senderSocket;
     static Timer timer;
-    static Queue<DatagramPacket> windowPackets = new LinkedList<>();
+    static Queue<DatagramPacket> windowPackets = new LinkedList<DatagramPacket>();
     static Boolean lastPacketAck = false;
 
     public static void main(String args[]) throws Exception {
