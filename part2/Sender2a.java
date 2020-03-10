@@ -11,18 +11,21 @@ public class Sender2a {
     public static class ReceiveThread implements Runnable {
         @Override
         public void run() {
-            while (true) {
+            while (!lastPacketAck) {
                 byte[] ack = new byte[2];
                 DatagramPacket ackPacket = new DatagramPacket(ack, ack.length);
                 try {
                     senderSocket.receive(ackPacket);
                 } catch (IOException e) {
-
+                  System.out.println(e);
                 }
                 Integer sequenceNumberACK = ((ack[0] & 0xff) << 8) + (ack[1] & 0xff);
-                if (sequenceNumberACK == finalPacketId - 1) {
+                System.out.println("Received: "+ sequenceNumberACK+" "+ finalPacketId);
+                if (sequenceNumberACK == finalPacketId-1) {
+                  System.out.println("here");
                     synchronized (lastPacketAck) {
                         lastPacketAck = true;
+                        timer.cancel();
                     }
                 } else {
                     synchronized (Sender2a.class) {
@@ -31,6 +34,12 @@ public class Sender2a {
                             windowPackets.remove();
                         }
                         base = sequenceNumberACK;
+                        if (base ==  nextSeqNum){
+                          timer.cancel();
+
+                        }else{
+                          timer.schedule(new resendWindowTask(),retryTimeout);
+                        }
                     }
                 }
 
@@ -43,11 +52,22 @@ public class Sender2a {
         @Override
         public void run() {
             // send window packets, timer will start automatically
+            ArrayList<DatagramPacket> packetstoAdd = new ArrayList<DatagramPacket>();
             synchronized (Sender2a.class) {
                 while (!windowPackets.isEmpty()) {
+                    // System.out.println(windowPackets.size());
                     DatagramPacket packet = windowPackets.remove();
-                    senderSocket.send(packet);
-                    windowPackets.add(packet);
+                    try {
+                        senderSocket.send(packet);
+                        // System.out.println("Re-Sent");
+                    } catch (IOException e) {
+                      System.out.println(e);
+                    }
+                    packetstoAdd.add(packet);
+                }
+                // System.out.println("adding them back in the queue");
+                for (int i=0;i<packetstoAdd.size();i++){
+                  windowPackets.add(packetstoAdd.get(i));
                 }
             }
         }
@@ -55,9 +75,10 @@ public class Sender2a {
 
     static int base = 0;
     static int nextSeqNum = 0;
+    static Integer retryTimeout = 0;
     static int finalPacketId = 0;
     static DatagramSocket senderSocket;
-    static Timer timer;
+    static Timer timer = new Timer();
     static Queue<DatagramPacket> windowPackets = new LinkedList<DatagramPacket>();
     static Boolean lastPacketAck = false;
 
@@ -66,12 +87,12 @@ public class Sender2a {
         final String hostName = args[0];
         final int portNumber = Integer.parseInt(args[1]);
         final String fileName = args[2];
-        final int retryTimeout = Integer.parseInt(args[3]);
+        retryTimeout = Integer.parseInt(args[3]);
         final int windowSize = Integer.parseInt(args[4]);
-        sendFile(hostName, portNumber, fileName, retryTimeout, windowSize);
+        sendFile(hostName, portNumber, fileName, windowSize);
     }
 
-    public static void sendFile(String hostName, int portNumber, String fileName, final int retryTimeout,
+    public static void sendFile(String hostName, int portNumber, String fileName,
             int windowSize) throws IOException, Exception {
 
         senderSocket = new DatagramSocket();
@@ -81,7 +102,7 @@ public class Sender2a {
         byte[] fileByteArray = new byte[(int) file.length()];
         fileStream.read(fileByteArray);
         fileStream.close();
-        int finalPacketId = (int) Math.ceil((double) file.length() / 1024);
+        finalPacketId = (int) Math.ceil((double) file.length() / 1024);
         boolean flagLastMessage = false;
         // // sequence number to keep track the acknowledged packets
         // time needed to calculate avg throughput at the end
@@ -92,7 +113,7 @@ public class Sender2a {
         Thread thread = new Thread(runnable);
         thread.start();
         // timer needed to resend packets
-        Timer timer = new Timer();
+        System.out.println(timer);
         // timer.schedule(new resendWindowTask(), 0, retryTimeout);
 
         while (!lastPacketAck) {
@@ -128,7 +149,7 @@ public class Sender2a {
                     System.out.println("Sent: Sequence number = " + nextSeqNum + " Flag = " + flagLastMessage
                             + " Length: " + messageToSend.length);
                     if (base == nextSeqNum) {
-                        timer.schedule(new resendWindowTask(), 0, retryTimeout);
+                        timer.schedule(new resendWindowTask(),retryTimeout);
                     }
                     nextSeqNum += 1;
                 }
