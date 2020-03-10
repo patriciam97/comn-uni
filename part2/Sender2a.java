@@ -90,7 +90,7 @@ public class Sender2a {
         thread.start();
         // timer needed to resend packets
         Timer timer = new Timer();
-        timer.schedule(new resendWindowTask(), 0, retryTimeout);
+        // timer.schedule(new resendWindowTask(), 0, retryTimeout);
 
         while (!lastPacketAck) {
             // // System.out.println("Base: " + base + ", NextSeqNum: " + nextSeqNum + "
