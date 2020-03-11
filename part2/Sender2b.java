@@ -1,10 +1,7 @@
 import java.io.*;
 import java.net.*;
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+
 
 public class Sender2b {
 
@@ -19,21 +16,27 @@ public class Sender2b {
                 } catch (IOException e) {
                     System.out.println(e);
                 }
-                Integer sequenceNumberACK = ((ack[0] & 0xff) << 8) + (ack[1] & 0xff);
-                System.out.println("Received: " + sequenceNumberACK + " " + finalPacketId);
-                if (sequenceNumberACK == finalPacketId - 1) {
-                    System.out.println("here");
-                    synchronized (lastPacketAck) {
+                synchronized (Sender2b.class) {
+                      Integer sequenceNumberACK = ((ack[0] & 0xff) << 8) + (ack[1] & 0xff);
+                      maxACKpacket = Math.max(maxACKpacket,sequenceNumberACK);
+                      System.out.println("Received: " + sequenceNumberACK + " " + finalPacketId);
+                      if (timerTasks.containsKey(sequenceNumberACK)) {
+                          timerTasks.get(sequenceNumberACK).cancel();
+                          System.out.println("Timer stopped: " + sequenceNumberACK);
+                          timerTasks.remove(sequenceNumberACK);
+                      }
+                      if (timerTasks.size()==0 && maxACKpacket == finalPacketId-1){
                         lastPacketAck = true;
                         timer.cancel();
-                    }
-                } else {
-                    synchronized (Sender2a.class) {
-                        if (timerTasks.containsKey(sequenceNumberACK)) {
-                            timerTasks.get(sequenceNumberACK).cancel();
-                        }
-                        base = sequenceNumberACK;
-                    }
+                      }
+                      // base = sequenceNumberACK;
+                      if (base == sequenceNumberACK){
+                          if (!timerTasks.isEmpty()){
+                              base = Collections.min(timerTasks.keySet());
+                          } else {
+                              base = nextSeqNum;
+                          }
+                      }
                 }
 
             }
@@ -69,6 +72,7 @@ public class Sender2b {
     static Timer timer = new Timer();
     static HashMap<Integer, TimerTask> timerTasks = new HashMap<Integer, TimerTask>();
     static Boolean lastPacketAck = false;
+    static Integer maxACKpacket = -1;
 
     public static void main(String args[]) throws Exception {
 
@@ -105,6 +109,9 @@ public class Sender2b {
         while (!lastPacketAck) {
             // // // System.out.println("Base: " + base + ", NextSeqNum: " + nextSeqNum + "
             // // // Window: " + windowSize);
+            // if (nextSeqNum==7){
+            //   Thread.sleep(10000);
+            // }
             synchronized (Sender2a.class) {
                 if ((nextSeqNum < base + windowSize) && nextSeqNum < finalPacketId) {
                     byte[] messageToSend = new byte[1027];
@@ -137,9 +144,6 @@ public class Sender2b {
                     System.out.println("Sent: Sequence number = " + nextSeqNum + " Flag = " +
                     flagLastMessage
                     + " Length: " + messageToSend.length);
-                    // if (base == nextSeqNum) {
-                    // timer.schedule(new resendWindowTask(), retryTimeout);
-                    // }
                     nextSeqNum += 1;
                 }
             }

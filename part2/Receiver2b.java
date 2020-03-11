@@ -21,7 +21,7 @@ public class Receiver2b {
         DatagramPacket acknowledgement = new DatagramPacket(ackPacketToSend, ackPacketToSend.length, hostAddress,
                 portNumber);
         receiverSocket.send(acknowledgement);
-        // System.out.println("SENT: ACK: " + previousSequenceNumber);
+        System.out.println("SENT: ACK: " + previousSequenceNumber);
     }
 
     public static void receiveFile(int port, String fileName, int windowSize) throws Exception {
