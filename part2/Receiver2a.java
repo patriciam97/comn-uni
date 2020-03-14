@@ -31,8 +31,10 @@ public class Receiver2a {
         // sequence numbers for calculations
         int sequenceNumber;
         int expectedSequenceNum = 0;
+        int lastAckReceived = -1;
         boolean flagLastMessage = false;
         boolean lastMessage = false;
+        boolean receivedAtLeast1 = false;
         // for each incoming message
         while (!lastMessage) {
             byte[] buffer = new byte[1027];
@@ -74,19 +76,20 @@ public class Receiver2a {
 
                 // Send acknowledgement
                 sendAckPacket(expectedSequenceNum, receiverSocket, hostAddress, portNumber);
+                lastAckReceived = expectedSequenceNum;
                 expectedSequenceNum += 1;
+                receivedAtLeast1 = true;
 
-
-            } else {
+            } else if (receivedAtLeast1){
                 // Resend the acknowledgement
-                sendAckPacket(expectedSequenceNum-1, receiverSocket, hostAddress, portNumber);
+                sendAckPacket(lastAckReceived, receiverSocket, hostAddress, portNumber);
                 flagLastMessage = false;
             }
-            sendAckPacket(expectedSequenceNum-1, receiverSocket, hostAddress, portNumber);
+            // sendAckPacket(expectedSequenceNum, receiverSocket, hostAddress, portNumber);
             // if it was the last message to be received close file stream
             if (flagLastMessage) {
                 for(int i=0;i<10;i++){
-                    sendAckPacket(expectedSequenceNum-1, receiverSocket, hostAddress, portNumber);
+                    sendAckPacket(lastAckReceived, receiverSocket, hostAddress, portNumber);
                 }
                 fileStream.close();
                 receiverSocket.close();

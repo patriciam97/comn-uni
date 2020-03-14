@@ -1,10 +1,6 @@
 import java.io.*;
 import java.net.*;
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 public class Sender2a {
 
@@ -17,28 +13,43 @@ public class Sender2a {
                 try {
                     senderSocket.receive(ackPacket);
                 } catch (IOException e) {
-                  System.out.println(e);
+                    System.out.println(e);
                 }
                 Integer sequenceNumberACK = ((ack[0] & 0xff) << 8) + (ack[1] & 0xff);
-                System.out.println("Received: "+ sequenceNumberACK+" "+ finalPacketId);
-                if (sequenceNumberACK == finalPacketId-1) {
-                  System.out.println("here");
+                System.out.println("Received: " + sequenceNumberACK + " " + finalPacketId);
+                if (sequenceNumberACK == finalPacketId - 1) {
+                    System.out.println("here");
                     synchronized (lastPacketAck) {
                         lastPacketAck = true;
+                        // resendTask.cancel();
                         timer.cancel();
                     }
                 } else {
+                    if (sequenceNumberACK < base)
+                        continue;
+                    int i = 0;
+                    if (windowPackets.size() == 0)
+                        continue;
                     synchronized (Sender2a.class) {
-                        Integer diff = Math.abs(sequenceNumberACK - base);
-                        for (int i = 0; i < diff; i++) {
-                            windowPackets.remove();
-                        }
-                        base = sequenceNumberACK;
-                        if (base ==  nextSeqNum){
-                          timer.cancel();
+                        System.out.println(sequenceNumberACK + "-" + base + "-" + windowPackets.size());
+                        Integer diff = Math.abs(sequenceNumberACK - base) +1;
+                        // for (int i = 0; i < diff; i++) {
+                        // System.out.println("REMOVED 1");
+                        // windowPackets.remove(i);
+                        // }
+                        do {
+                            System.out.println("REMOVED 1");
+                            windowPackets.removeFirst();
+                            i++;
+                        } while (i < diff);
+                        System.out.println("BASE MOVED FROM " + base + " TO " + (sequenceNumberACK + 1));
+                        base = sequenceNumberACK + 1;
+                        if (base == nextSeqNum) {
+                            resendTask.cancel();
 
-                        }else{
-                          timer.schedule(new resendWindowTask(),retryTimeout);
+                        } else {
+                            resendTask = new ResendWindowTask();
+                            timer.schedule(resendTask, retryTimeout);
                         }
                     }
                 }
@@ -47,27 +58,19 @@ public class Sender2a {
         }
     }
 
-    static class resendWindowTask extends TimerTask {
+    static class ResendWindowTask extends TimerTask {
 
         @Override
         public void run() {
             // send window packets, timer will start automatically
-            ArrayList<DatagramPacket> packetstoAdd = new ArrayList<DatagramPacket>();
-            synchronized (Sender2a.class) {
-                while (!windowPackets.isEmpty()) {
-                    // System.out.println(windowPackets.size());
-                    DatagramPacket packet = windowPackets.remove();
+            while (!windowPackets.isEmpty() && !lastPacketAck) {
+                System.out.println("RE-SEND HAPPENED: " + windowPackets.size());
+                for (int i = 0; i < windowPackets.size(); i++) {
                     try {
-                        senderSocket.send(packet);
-                        // System.out.println("Re-Sent");
+                        senderSocket.send(windowPackets.get(i));
                     } catch (IOException e) {
-                      System.out.println(e);
+                        System.out.println(e);
                     }
-                    packetstoAdd.add(packet);
-                }
-                // System.out.println("adding them back in the queue");
-                for (int i=0;i<packetstoAdd.size();i++){
-                  windowPackets.add(packetstoAdd.get(i));
                 }
             }
         }
@@ -79,8 +82,9 @@ public class Sender2a {
     static int finalPacketId = 0;
     static DatagramSocket senderSocket;
     static Timer timer = new Timer();
-    static Queue<DatagramPacket> windowPackets = new LinkedList<DatagramPacket>();
+    static LinkedList<DatagramPacket> windowPackets = new LinkedList<DatagramPacket>();
     static Boolean lastPacketAck = false;
+    static ResendWindowTask resendTask = new ResendWindowTask();
 
     public static void main(String args[]) throws Exception {
 
@@ -92,8 +96,8 @@ public class Sender2a {
         sendFile(hostName, portNumber, fileName, windowSize);
     }
 
-    public static void sendFile(String hostName, int portNumber, String fileName,
-            int windowSize) throws IOException, Exception {
+    public static void sendFile(String hostName, int portNumber, String fileName, int windowSize)
+            throws IOException, Exception {
 
         senderSocket = new DatagramSocket();
         InetAddress ipAddress = InetAddress.getByName(hostName);
@@ -119,41 +123,47 @@ public class Sender2a {
         while (!lastPacketAck) {
             // // System.out.println("Base: " + base + ", NextSeqNum: " + nextSeqNum + "
             // // Window: " + windowSize);
-            synchronized (Sender2a.class) {
-                if ((nextSeqNum < base + windowSize) && nextSeqNum < finalPacketId) {
-                    byte[] messageToSend = new byte[1027];
-                    if ((nextSeqNum * 1024) + 1024 >= fileByteArray.length) {
-                        messageToSend = new byte[fileByteArray.length - (nextSeqNum * 1024) + 3];
-                        flagLastMessage = true;
-                    } else {
-                        flagLastMessage = false;
-                    }
-                    messageToSend[0] = (byte) (nextSeqNum >> 8);
-                    messageToSend[1] = (byte) (nextSeqNum);
+            // synchronized (Sender2a.class) {
+            if ((nextSeqNum < base + windowSize) && nextSeqNum < finalPacketId) {
+                System.out.println("What");
+                byte[] messageToSend = new byte[1027];
+                if ((nextSeqNum * 1024) + 1024 >= fileByteArray.length) {
+                    messageToSend = new byte[fileByteArray.length - (nextSeqNum * 1024) + 3];
+                    flagLastMessage = true;
+                } else {
+                    flagLastMessage = false;
+                }
+                messageToSend[0] = (byte) (nextSeqNum >> 8);
+                messageToSend[1] = (byte) (nextSeqNum);
 
-                    if (flagLastMessage) {
-                        messageToSend[2] = (byte) 1;
-                        for (int j = 0; j < (fileByteArray.length - (nextSeqNum * 1024)); j++) {
-                            messageToSend[j + 3] = fileByteArray[(nextSeqNum * 1024) + j];
-                        }
-                    } else {
-                        messageToSend[2] = (byte) 0;
-                        for (int j = 0; j <= 1023; j++) {
-                            messageToSend[j + 3] = fileByteArray[(nextSeqNum * 1024) + j];
-                        }
+                if (flagLastMessage) {
+                    messageToSend[2] = (byte) 1;
+                    for (int j = 0; j < (fileByteArray.length - (nextSeqNum * 1024)); j++) {
+                        messageToSend[j + 3] = fileByteArray[(nextSeqNum * 1024) + j];
                     }
-                    DatagramPacket packetToSend = new DatagramPacket(messageToSend, messageToSend.length, ipAddress,
-                            portNumber);
-                    senderSocket.send(packetToSend);
+                } else {
+                    messageToSend[2] = (byte) 0;
+                    for (int j = 0; j <= 1023; j++) {
+                        messageToSend[j + 3] = fileByteArray[(nextSeqNum * 1024) + j];
+                    }
+                }
+                DatagramPacket packetToSend = new DatagramPacket(messageToSend, messageToSend.length, ipAddress,
+                        portNumber);
+                senderSocket.send(packetToSend);
+                synchronized (Sender2a.class) {
                     windowPackets.add(packetToSend);
                     System.out.println("Sent: Sequence number = " + nextSeqNum + " Flag = " + flagLastMessage
                             + " Length: " + messageToSend.length);
                     if (base == nextSeqNum) {
-                        timer.schedule(new resendWindowTask(),retryTimeout);
+                        System.out.println("WHAT");
+                        resendTask = new ResendWindowTask();
+                        timer.schedule(resendTask, retryTimeout);
                     }
                     nextSeqNum += 1;
                 }
+
             }
+            // }
 
         }
         // executor.shutdown();
