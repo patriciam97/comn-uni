@@ -2,46 +2,70 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-
 public class Sender2b {
 
     public static class ReceiveThread implements Runnable {
         @Override
         public void run() {
             while (!lastPacketAck) {
+                System.out.println("here");
                 byte[] ack = new byte[2];
                 DatagramPacket ackPacket = new DatagramPacket(ack, ack.length);
+
                 try {
+
+                    senderSocket.setSoTimeout(exitTimeout);
                     senderSocket.receive(ackPacket);
-                } catch (IOException e) {
-                    System.out.println(e);
+
+                } catch (SocketTimeoutException e1) {
+                    lastPacketAck = true;
+                    timer.cancel();
+                    exit = true;
+                    break;
+                } catch (SocketException e2) {
+                    lastPacketAck = true;
+                    timer.cancel();
+                    exit = true;
+                    break;
+                } catch (IOException e3) {
+                    e3.printStackTrace();
                 }
-                synchronized (Sender2b.class) {
-                      Integer sequenceNumberACK = ((ack[0] & 0xff) << 8) + (ack[1] & 0xff);
-                      maxACKpacket = Math.max(maxACKpacket,sequenceNumberACK);
+
+                Integer sequenceNumberACK;
+                synchronized (Sender2b.sharedLock) {
+                      sequenceNumberACK = ((ack[0] & 0xff) << 8) + (ack[1] & 0xff);
                       System.out.println("Received: " + sequenceNumberACK + " " + finalPacketId);
                       if (timerTasks.containsKey(sequenceNumberACK)) {
                           timerTasks.get(sequenceNumberACK).cancel();
                           System.out.println("Timer stopped: " + sequenceNumberACK);
                           timerTasks.remove(sequenceNumberACK);
                       }
-                      if (timerTasks.size()==0 && maxACKpacket == finalPacketId-1){
+                      maxACKpacket = Math.max(maxACKpacket,sequenceNumberACK);
+                }
+                      if (timerTasks.size()== 0 && maxACKpacket == finalPacketId-1){
                         lastPacketAck = true;
                         timer.cancel();
+                        break;
+                      } else{
+                          // while(timerTasks.size()== 0){
+                          //   continue;
+                          // }
+                            synchronized(Sender2b.sharedLock){
+                              if (base == sequenceNumberACK){
+                                  System.out.println(timerTasks.keySet());
+                                  try{
+                                    base = Collections.min(timerTasks.keySet());
+                                  } catch(Exception e){
+                                    base=nextSeqNum;
+                                  }
+                              }
+                            }
                       }
-                      // base = sequenceNumberACK;
-                      if (base == sequenceNumberACK){
-                          if (!timerTasks.isEmpty()){
-                              base = Collections.min(timerTasks.keySet());
-                          } else {
-                              base = nextSeqNum;
-                          }
-                      }
-                }
 
+              }
             }
         }
-    }
+
 
     static class resendPacketTask extends TimerTask {
         Integer sequenceNumber;
@@ -63,7 +87,7 @@ public class Sender2b {
             }
         }
     }
-
+    private static Object sharedLock = new Object();
     static int base = 0;
     static int nextSeqNum = 0;
     static Integer retryTimeout = 0;
@@ -73,7 +97,8 @@ public class Sender2b {
     static HashMap<Integer, TimerTask> timerTasks = new HashMap<Integer, TimerTask>();
     static Boolean lastPacketAck = false;
     static Integer maxACKpacket = -1;
-
+    static Boolean exit = false;
+    static int exitTimeout = 10000; //10 seconds
     public static void main(String args[]) throws Exception {
 
         final String hostName = args[0];
@@ -107,14 +132,16 @@ public class Sender2b {
         // timer needed to resend packets
 
         while (!lastPacketAck) {
-            // // // System.out.println("Base: " + base + ", NextSeqNum: " + nextSeqNum + "
-            // // // Window: " + windowSize);
+            // System.out.println("Base: " + base + ", NextSeqNum: " + nextSeqNum + "Window: " + windowSize);
             // if (nextSeqNum==7){
-            //   Thread.sleep(10000);
+            //   Thread.sleep(1000);
             // }
-            synchronized (Sender2a.class) {
-                if ((nextSeqNum < base + windowSize) && nextSeqNum < finalPacketId) {
-                    byte[] messageToSend = new byte[1027];
+            // System.out.println(lastPacketAck);
+            byte[] messageToSend;
+            if ((nextSeqNum < base + windowSize) && nextSeqNum < finalPacketId) {
+            // System.out.println("here3");
+
+                    messageToSend = new byte[1027];
                     if ((nextSeqNum * 1024) + 1024 >= fileByteArray.length) {
                         messageToSend = new byte[fileByteArray.length - (nextSeqNum * 1024) + 3];
                         flagLastMessage = true;
@@ -135,19 +162,20 @@ public class Sender2b {
                             messageToSend[j + 3] = fileByteArray[(nextSeqNum * 1024) + j];
                         }
                     }
-                    DatagramPacket packetToSend = new DatagramPacket(messageToSend, messageToSend.length, ipAddress,
-                            portNumber);
-                    senderSocket.send(packetToSend);
-                    TimerTask task = new resendPacketTask(nextSeqNum, packetToSend);
+                  DatagramPacket packetToSend = new DatagramPacket(messageToSend, messageToSend.length, ipAddress,
+                          portNumber);
+                  senderSocket.send(packetToSend);
+                  System.out.println("Sent: Sequence number = " + nextSeqNum + " Flag = " +
+                  flagLastMessage
+                  + " Length: " + messageToSend.length);
+                  TimerTask task = new resendPacketTask(nextSeqNum, packetToSend);
+                  synchronized(Sender2b.sharedLock){
                     timerTasks.put(nextSeqNum, task);
                     timer.schedule(task,0,retryTimeout);
-                    System.out.println("Sent: Sequence number = " + nextSeqNum + " Flag = " +
-                    flagLastMessage
-                    + " Length: " + messageToSend.length);
                     nextSeqNum += 1;
+                  }
                 }
-            }
-
+                // Thread.sleep(1);
         }
         senderSocket.close();
         fileStream.close();
@@ -155,7 +183,13 @@ public class Sender2b {
         int filesizeKB = (fileByteArray.length) / 1027;
         date = new Date();
         long timeDoneSendingMS = date.getTime();
-        double transferTime = (timeDoneSendingMS - timeStartedSendingMS) / 1000;
+        double transferTime;
+        if (exit){
+            transferTime = (timeDoneSendingMS - timeStartedSendingMS-(long)exitTimeout) / 1000;
+
+        } else{
+            transferTime = (timeDoneSendingMS - timeStartedSendingMS) / 1000;
+        }
         double throughput = (double) filesizeKB / transferTime;
         System.out.println(throughput);
     }
