@@ -1,0 +1,6 @@
+#!/bin/bash
+
+javac Sender2a.java
+javac Receiver2a.java
+java Receiver2a 100 2a.jpg &
+java Sender2a localhost 100 test.jpg 25 1
